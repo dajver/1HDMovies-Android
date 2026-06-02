@@ -200,8 +200,16 @@ class DashboardFragment: BaseFragment<FragmentDashboardBinding>(FragmentDashboar
             navigationRouter.navigateTo(Router.Search)
         }
 
+        binding.btnFilter.setOnClickListener {
+            navigationRouter.navigateTo(Router.Filter)
+        }
+
         binding.btnFavorites.setOnClickListener {
             navigationRouter.navigateTo(Router.Favorites)
+        }
+
+        binding.btnAccount.setOnClickListener {
+            navigationRouter.navigateTo(Router.Account)
         }
     }
 

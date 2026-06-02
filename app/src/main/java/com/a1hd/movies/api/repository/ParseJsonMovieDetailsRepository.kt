@@ -115,6 +115,6 @@ data class MovieEpisodesDataModel(
     val episodeNumber: String,
     val episodeName: String,
     val link: String
-) {
+) : java.io.Serializable {
     var isSelected: Boolean = false
 }

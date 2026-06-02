@@ -6,33 +6,18 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
 
-    <ProgressBar
-        android:id="@+id/pbProgress"
-        style="@style/Widget.AppCompat.ProgressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:indeterminateTint="@android:color/white"
-        android:visibility="visible"
-        tools:visibility="gone" />
-
     <LinearLayout
-        android:id="@+id/llMoviesContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:visibility="gone"
-        tools:visibility="visible">
+        android:orientation="vertical">
 
         <TextView
-            android:id="@+id/tvName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
             android:paddingStart="12dp"
             android:paddingEnd="12dp"
             android:paddingTop="10dp"
-            android:text="@string/all_movies"
+            android:text="@string/filter"
             android:textColor="@android:color/white"
             android:textSize="24sp" />
 
@@ -41,8 +26,28 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
+        <ProgressBar
+            android:id="@+id/pbProgress"
+            style="@style/Widget.AppCompat.ProgressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:indeterminateTint="@android:color/white"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tvEmpty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/no_results"
+            android:textColor="#888888"
+            android:textSize="16sp"
+            android:layout_marginTop="48dp"
+            android:visibility="gone" />
+
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvMovies"
+            android:id="@+id/rvResults"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"

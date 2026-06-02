@@ -9,6 +9,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import org.jsoup.Jsoup
 import javax.inject.Inject
 
+data class ServerOption(
+    val name: String,
+    val embedUrl: String
+)
+
 @HiltViewModel
 class WatchMovieViewModel @Inject constructor(
     private val restHttpClient: RestHttpClient
@@ -17,7 +22,16 @@ class WatchMovieViewModel @Inject constructor(
     private val embedUrlMutableLiveData = MutableLiveData<EmbedUrlResult>()
     val embedUrlLiveData: LiveData<EmbedUrlResult> = embedUrlMutableLiveData
 
+    private val serversMutableLiveData = MutableLiveData<List<ServerOption>>()
+    val serversLiveData: LiveData<List<ServerOption>> = serversMutableLiveData
+
     var embedUrl: String? = null
+        private set
+
+    var selectedServer: ServerOption? = null
+        private set
+
+    var servers: List<ServerOption> = emptyList()
         private set
 
     fun fetchEmbedUrl(watchUrl: String) = launch {
@@ -30,10 +44,28 @@ class WatchMovieViewModel @Inject constructor(
             if (plUrl != null) {
                 val serverHtml = restHttpClient.get(plUrl)
                 val doc = Jsoup.parse(serverHtml)
-                val firstServer = doc.select("a.sv-item").firstOrNull()
-                val url = firstServer?.attr("data-id")
-                embedUrl = url
-                embedUrlMutableLiveData.postValue(EmbedUrlResult(url))
+                val serverElements = doc.select("a.sv-item")
+
+                val options = mutableListOf<ServerOption>()
+                for (element in serverElements) {
+                    val name = element.text().trim()
+                    val url = element.attr("data-id")
+                    if (url.isNotEmpty()) {
+                        options.add(ServerOption(name, url))
+                    }
+                }
+
+                servers = options
+                serversMutableLiveData.postValue(options)
+
+                val first = options.firstOrNull()
+                if (first != null) {
+                    selectedServer = first
+                    embedUrl = first.embedUrl
+                    embedUrlMutableLiveData.postValue(EmbedUrlResult(first.embedUrl))
+                } else {
+                    embedUrlMutableLiveData.postValue(EmbedUrlResult(null))
+                }
             } else {
                 embedUrlMutableLiveData.postValue(EmbedUrlResult(null))
             }
@@ -41,6 +73,12 @@ class WatchMovieViewModel @Inject constructor(
             e.printStackTrace()
             embedUrlMutableLiveData.postValue(EmbedUrlResult(null))
         }
+    }
+
+    fun selectServer(server: ServerOption) {
+        selectedServer = server
+        embedUrl = server.embedUrl
+        embedUrlMutableLiveData.postValue(EmbedUrlResult(server.embedUrl))
     }
 
     data class EmbedUrlResult(val url: String?)

@@ -16,6 +16,7 @@ class AllMoviesRecyclerAdapter @Inject constructor(): RecyclerView.Adapter<Recyc
     var onMovieClickListener: (MoviesDataModel) -> Unit = { }
 
     fun setMovies(groups: MutableList<MoviesDataModel>) {
+        this.moviesList.clear()
         this.moviesList.addAll(groups)
         notifyDataSetChanged()
     }

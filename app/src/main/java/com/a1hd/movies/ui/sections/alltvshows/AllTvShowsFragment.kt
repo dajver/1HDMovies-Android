@@ -6,6 +6,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.a1hd.movies.api.repository.FilterType
 import com.a1hd.movies.databinding.FragmentAllTvShowsBinding
 import com.a1hd.movies.ui.base.BaseFragment
 import com.a1hd.movies.ui.navigation.route.Router
@@ -36,6 +37,19 @@ class AllTvShowsFragment: BaseFragment<FragmentAllTvShowsBinding>(FragmentAllTvS
         }
         binding.rvTvShows.adapter = allTvShowsRecyclerAdapter
         binding.rvTvShows.addOnScrollListener(paginationListener)
+
+        binding.filterBar.setFilterOptions(allTvShowsViewModel.filterOptions)
+        binding.filterBar.onFiltersChanged = {
+            val filters = binding.filterBar.filters
+            filters.type.clear()
+            filters.type.add(FilterType.TV_SERIES)
+            if (binding.filterBar.hasActiveFilters) {
+                binding.pbProgress.isVisible = true
+                allTvShowsViewModel.applyFilters(filters)
+            } else {
+                allTvShowsViewModel.resetFilters()
+            }
+        }
 
         allTvShowsViewModel.fetchTvShows()
         allTvShowsViewModel.fetchTvShowsLiveData.observe(viewLifecycleOwner) {

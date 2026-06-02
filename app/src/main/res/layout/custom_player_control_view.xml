@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Bottom bar -->
+    <LinearLayout
+        android:id="@+id/llBottomBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="vertical"
+        android:background="#AA000000"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
+
+        <!-- Seek bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp">
+
+            <TextView
+                android:id="@id/exo_position"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
+
+            <androidx.media3.ui.DefaultTimeBar
+                android:id="@id/exo_progress"
+                android:layout_width="0dp"
+                android:layout_height="28dp"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:id="@id/exo_duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+        <!-- Playback controls -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:layout_marginTop="4dp">
+
+            <Button
+                android:id="@+id/btnPrevEpisode"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="@string/prev"
+                android:textSize="12sp"
+                android:minWidth="80dp"
+                android:layout_marginEnd="16dp"
+                android:backgroundTint="@color/background_gradient_end"
+                android:visibility="gone" />
+
+            <ImageButton
+                android:id="@id/exo_rew"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@android:color/transparent"
+                android:scaleType="centerInside"
+                android:contentDescription="@string/prev" />
+
+            <ImageButton
+                android:id="@id/exo_play_pause"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@android:color/transparent"
+                android:scaleType="centerInside"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp" />
+
+            <ImageButton
+                android:id="@id/exo_ffwd"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@android:color/transparent"
+                android:scaleType="centerInside"
+                android:contentDescription="@string/next" />
+
+            <Button
+                android:id="@+id/btnNextEpisode"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="@string/next"
+                android:textSize="12sp"
+                android:minWidth="80dp"
+                android:backgroundTint="@color/background_gradient_end"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+        <!-- Subtitles + Server row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="4dp">
+
+            <Button
+                android:id="@+id/btnSubtitles"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="@string/subtitles"
+                android:textSize="11sp"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="@color/background_gradient_end"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/btnServer"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="@string/server"
+                android:textSize="11sp"
+                android:backgroundTint="@color/background_gradient_end"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</RelativeLayout>

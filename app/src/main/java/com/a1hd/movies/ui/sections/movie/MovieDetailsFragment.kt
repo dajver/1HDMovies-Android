@@ -52,8 +52,12 @@ class MovieDetailsFragment: BaseFragment<FragmentMovieDetailsBinding>(FragmentMo
         seasonsRecyclerAdapter.onSeasonClickListener = {
             episodesRecyclerAdapter.setEpisodes(it.episodes)
         }
-        episodesRecyclerAdapter.onEpisodeClickListener = {
-            navigationRouter.navigateTo(Router.WatchMovie(it.link))
+        episodesRecyclerAdapter.onEpisodeClickListener = { episode ->
+            val selectedSeason = movieDetailsViewModel.getSelectedSeason()
+            val episodes = selectedSeason?.episodes?.let { ArrayList(it) }
+            val index = episodes?.indexOfFirst { it.link == episode.link }?.coerceAtLeast(0) ?: 0
+            val title = movieDetailsViewModel.getMovieName()
+            navigationRouter.navigateTo(Router.WatchMovie(episode.link, title, episodes, index))
         }
         youMayAlsoLikeRecyclerAdapter.onMovieClickListener = {
             navigationRouter.navigateTo(Router.MovieDetails(it.link))
@@ -96,7 +100,7 @@ class MovieDetailsFragment: BaseFragment<FragmentMovieDetailsBinding>(FragmentMo
             }
 
             binding.btnWatchMovie.setOnClickListener {
-                navigationRouter.navigateTo(Router.WatchMovie(movie.watchMovieLinkWithEpisodeId))
+                navigationRouter.navigateTo(Router.WatchMovie(movie.watchMovieLinkWithEpisodeId, title = movie.name))
             }
 
             addFavoriteButtonState(movie)

@@ -4,14 +4,17 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.a1hd.movies.etc.extensions.launch
+import com.a1hd.movies.api.repository.FilterOptions
 import com.a1hd.movies.api.repository.MoviesDataModel
+import com.a1hd.movies.api.repository.ParseJsonFilterRepository
 import com.a1hd.movies.api.repository.ParseJsonMoviesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
 class AllMoviesViewModel @Inject constructor(
-    private val parseJsonMoviesRepository: ParseJsonMoviesRepository
+    private val parseJsonMoviesRepository: ParseJsonMoviesRepository,
+    private val parseJsonFilterRepository: ParseJsonFilterRepository
 ): ViewModel() {
 
     private val fetchMoviesMutableLiveData = MutableLiveData<List<MoviesDataModel>>()
@@ -19,6 +22,9 @@ class AllMoviesViewModel @Inject constructor(
 
     var currentPage = 1
     private var allMoviesList = emptyList<MoviesDataModel>()
+
+    var filterOptions = FilterOptions()
+    val isFiltering: Boolean get() = !filterOptions.isEmpty
 
     fun fetchMovies() = launch {
         if (allMoviesList.isEmpty()) {
@@ -28,7 +34,30 @@ class AllMoviesViewModel @Inject constructor(
     }
 
     fun fetchPaginationMovies() = launch {
-        allMoviesList = parseJsonMoviesRepository.fetchMovies(page = currentPage)
+        if (isFiltering) {
+            val filtered = parseJsonFilterRepository.fetchFiltered(filterOptions, currentPage)
+            allMoviesList = filtered
+        } else {
+            allMoviesList = parseJsonMoviesRepository.fetchMovies(page = currentPage)
+        }
         fetchMoviesMutableLiveData.postValue(allMoviesList)
+    }
+
+    fun applyFilters(options: FilterOptions) {
+        filterOptions = options
+        currentPage = 1
+        allMoviesList = emptyList()
+        launch {
+            val results = parseJsonFilterRepository.fetchFiltered(filterOptions, currentPage)
+            allMoviesList = results
+            fetchMoviesMutableLiveData.postValue(allMoviesList)
+        }
+    }
+
+    fun resetFilters() {
+        filterOptions.reset()
+        currentPage = 1
+        allMoviesList = emptyList()
+        fetchMovies()
     }
 }

@@ -62,4 +62,12 @@ class MovieDetailsViewModel @Inject constructor(
     fun hasMovie(movie: MoviesDetailsDataModel): Boolean {
         return favoriteRepository.hasMovie(movie)
     }
+
+    fun getMovieName(): String? {
+        return moviesDetailsDataModel?.name
+    }
+
+    fun getSelectedSeason(): com.a1hd.movies.api.repository.MovieSeasonDataModel? {
+        return moviesDetailsDataModel?.seasonsList?.firstOrNull { it.isSelected }
+    }
 }

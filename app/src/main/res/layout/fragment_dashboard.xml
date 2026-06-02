@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:fitsSystemWindows="true">
 
     <ProgressBar
         android:id="@+id/pbProgress"
@@ -56,6 +57,16 @@
                 android:src="@drawable/favorites_button_selected" />
 
             <ImageButton
+                android:id="@+id/btnFilter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                android:focusable="true"
+                android:padding="10dp"
+                android:src="@android:drawable/ic_menu_sort_by_size"
+                android:contentDescription="@string/filter" />
+
+            <ImageButton
                 android:id="@+id/btnSearch"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -63,6 +74,16 @@
                 android:focusable="true"
                 android:padding="10dp"
                 android:src="@drawable/search_button_selected" />
+
+            <ImageButton
+                android:id="@+id/btnAccount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                android:focusable="true"
+                android:padding="10dp"
+                android:src="@android:drawable/ic_menu_myplaces"
+                android:contentDescription="@string/account" />
 
         </LinearLayout>
 

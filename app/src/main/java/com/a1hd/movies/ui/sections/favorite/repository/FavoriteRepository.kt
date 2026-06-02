@@ -15,6 +15,9 @@ class FavoriteRepository @Inject constructor(prefs: SharedPreferences, gson: Gso
 
     private var favorites: MutableList<MoviesDetailsDataModel> by prefs.mutableList(FAVORITE_LIST, gson, "")
 
+    var onFavoriteAdded: ((MoviesDetailsDataModel) -> Unit)? = null
+    var onFavoriteRemoved: ((MoviesDetailsDataModel) -> Unit)? = null
+
     fun fetchAllFavorites(): MutableList<MoviesDetailsDataModel> {
         return favorites.sortedByDescending { it.addedAt }.toMutableList()
     }
@@ -22,13 +25,26 @@ class FavoriteRepository @Inject constructor(prefs: SharedPreferences, gson: Gso
     fun favorite(movie: MoviesDetailsDataModel) {
         if (hasMovie(movie)) {
             remove(movie)
+            onFavoriteRemoved?.invoke(movie)
         } else {
             save(movie)
+            onFavoriteAdded?.invoke(movie)
         }
     }
 
     fun hasMovie(movie: MoviesDetailsDataModel): Boolean {
-        return favorites.contains(movie)
+        return favorites.any { it.linkToDetails == movie.linkToDetails }
+    }
+
+    fun addWithoutSync(movie: MoviesDetailsDataModel) {
+        if (favorites.any { it.linkToDetails == movie.linkToDetails }) return
+        val favoritesList = mutableListOf<MoviesDetailsDataModel>()
+        favoritesList.addAll(favorites)
+        if (movie.addedAt == null) {
+            movie.addedAt = Date().time
+        }
+        favoritesList.add(movie)
+        favorites = favoritesList
     }
 
     private fun save(movie: MoviesDetailsDataModel) {
@@ -42,7 +58,7 @@ class FavoriteRepository @Inject constructor(prefs: SharedPreferences, gson: Gso
     private fun remove(movie: MoviesDetailsDataModel) {
         val favoritesList = mutableListOf<MoviesDetailsDataModel>()
         favoritesList.addAll(favorites)
-        favoritesList.remove(movie)
+        favoritesList.removeAll { it.linkToDetails == movie.linkToDetails }
         favorites = favoritesList
     }
 }

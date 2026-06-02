@@ -6,7 +6,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import com.a1hd.movies.api.repository.FilterType
 import com.a1hd.movies.databinding.FragmentAllMoviesBinding
 import com.a1hd.movies.ui.base.BaseFragment
 import com.a1hd.movies.ui.navigation.route.Router
@@ -37,6 +37,19 @@ class AllMoviesFragment: BaseFragment<FragmentAllMoviesBinding>(FragmentAllMovie
         }
         binding.rvMovies.adapter = allMoviesRecyclerAdapter
         binding.rvMovies.addOnScrollListener(paginationListener)
+
+        binding.filterBar.setFilterOptions(allMoviesViewModel.filterOptions)
+        binding.filterBar.onFiltersChanged = {
+            val filters = binding.filterBar.filters
+            filters.type.clear()
+            filters.type.add(FilterType.MOVIE)
+            if (binding.filterBar.hasActiveFilters) {
+                binding.pbProgress.isVisible = true
+                allMoviesViewModel.applyFilters(filters)
+            } else {
+                allMoviesViewModel.resetFilters()
+            }
+        }
 
         allMoviesViewModel.fetchMovies()
         allMoviesViewModel.fetchMoviesLiveData.observe(viewLifecycleOwner) {

@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "449601530103",
+    "project_id": "hd-movies-df708",
+    "storage_bucket": "hd-movies-df708.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:449601530103:android:7527d0bdadaef35a8b0bf2",
+        "android_client_info": {
+          "package_name": "com.a1hd.movies"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "449601530103-ao73udbt42qsgcauri3btb212l6l9psk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBYoVy9bRDQ28Y4LChzL7fOL-yFe8GvxMU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "449601530103-ao73udbt42qsgcauri3btb212l6l9psk.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "449601530103-lh41ritjt9jeq2fpm7bre9e80899ko42.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.dajver.one.hd"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

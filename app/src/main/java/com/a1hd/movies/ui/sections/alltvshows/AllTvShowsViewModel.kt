@@ -4,14 +4,17 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.a1hd.movies.etc.extensions.launch
+import com.a1hd.movies.api.repository.FilterOptions
 import com.a1hd.movies.api.repository.MoviesDataModel
+import com.a1hd.movies.api.repository.ParseJsonFilterRepository
 import com.a1hd.movies.api.repository.ParseJsonTvShowsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
 class AllTvShowsViewModel @Inject constructor(
-    private val parseJsonTvShowsRepository: ParseJsonTvShowsRepository
+    private val parseJsonTvShowsRepository: ParseJsonTvShowsRepository,
+    private val parseJsonFilterRepository: ParseJsonFilterRepository
 ): ViewModel() {
 
     private val fetchTvShowsMutableLiveData = MutableLiveData<List<MoviesDataModel>>()
@@ -19,6 +22,9 @@ class AllTvShowsViewModel @Inject constructor(
 
     var currentPage = 1
     private var allTvShowsList = emptyList<MoviesDataModel>()
+
+    var filterOptions = FilterOptions()
+    val isFiltering: Boolean get() = !filterOptions.isEmpty
 
     fun fetchTvShows() = launch {
         if (allTvShowsList.isEmpty()) {
@@ -28,7 +34,30 @@ class AllTvShowsViewModel @Inject constructor(
     }
 
     fun fetchPaginationTvShows() = launch {
-        allTvShowsList = parseJsonTvShowsRepository.fetchTvShows(page = currentPage)
+        if (isFiltering) {
+            val filtered = parseJsonFilterRepository.fetchFiltered(filterOptions, currentPage)
+            allTvShowsList = filtered
+        } else {
+            allTvShowsList = parseJsonTvShowsRepository.fetchTvShows(page = currentPage)
+        }
         fetchTvShowsMutableLiveData.postValue(allTvShowsList)
+    }
+
+    fun applyFilters(options: FilterOptions) {
+        filterOptions = options
+        currentPage = 1
+        allTvShowsList = emptyList()
+        launch {
+            val results = parseJsonFilterRepository.fetchFiltered(filterOptions, currentPage)
+            allTvShowsList = results
+            fetchTvShowsMutableLiveData.postValue(allTvShowsList)
+        }
+    }
+
+    fun resetFilters() {
+        filterOptions.reset()
+        currentPage = 1
+        allTvShowsList = emptyList()
+        fetchTvShows()
     }
 }
