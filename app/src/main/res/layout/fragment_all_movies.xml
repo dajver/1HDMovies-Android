@@ -36,7 +36,7 @@
             android:textColor="@android:color/white"
             android:textSize="24sp" />
 
-        <com.a1hd.movies.ui.views.FilterBarView
+        <com.a1hd.movies.ui.sections.filter.views.FilterBarView
             android:id="@+id/filterBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />

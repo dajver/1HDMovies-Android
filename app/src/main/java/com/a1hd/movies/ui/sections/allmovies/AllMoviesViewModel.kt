@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.a1hd.movies.etc.extensions.launch
-import com.a1hd.movies.api.repository.FilterOptions
+import com.a1hd.movies.api.repository.models.FilterOptions
 import com.a1hd.movies.api.repository.MoviesDataModel
 import com.a1hd.movies.api.repository.ParseJsonFilterRepository
 import com.a1hd.movies.api.repository.ParseJsonMoviesRepository

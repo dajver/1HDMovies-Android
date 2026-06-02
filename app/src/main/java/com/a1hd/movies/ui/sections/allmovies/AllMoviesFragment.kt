@@ -6,7 +6,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.a1hd.movies.api.repository.FilterType
+import com.a1hd.movies.api.repository.models.FilterType
 import com.a1hd.movies.databinding.FragmentAllMoviesBinding
 import com.a1hd.movies.ui.base.BaseFragment
 import com.a1hd.movies.ui.navigation.route.Router

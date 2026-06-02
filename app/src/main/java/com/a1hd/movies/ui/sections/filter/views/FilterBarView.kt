@@ -1,4 +1,4 @@
-package com.a1hd.movies.ui.views
+package com.a1hd.movies.ui.sections.filter.views
 
 import android.content.Context
 import android.content.res.ColorStateList
@@ -7,12 +7,12 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.Button
 import android.widget.FrameLayout
+import androidx.appcompat.R
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
-import com.a1hd.movies.R
-import com.a1hd.movies.api.repository.FilterData
-import com.a1hd.movies.api.repository.FilterOptions
-import com.a1hd.movies.api.repository.FilterSort
+import com.a1hd.movies.api.repository.models.FilterData
+import com.a1hd.movies.api.repository.models.FilterOptions
+import com.a1hd.movies.api.repository.models.FilterSort
 import com.a1hd.movies.databinding.ViewFilterBarBinding
 
 class FilterBarView(context: Context, attrs: AttributeSet? = null) : FrameLayout(context, attrs) {
@@ -35,7 +35,7 @@ class FilterBarView(context: Context, attrs: AttributeSet? = null) : FrameLayout
     }
 
     private fun showPickerDialog(title: String, items: Array<String>, onPick: (Int) -> Unit) {
-        AlertDialog.Builder(context, androidx.appcompat.R.style.Theme_AppCompat_Dialog_Alert)
+        AlertDialog.Builder(context, R.style.Theme_AppCompat_Dialog_Alert)
             .setTitle(title)
             .setItems(items) { _, which -> onPick(which) }
             .show()
@@ -43,8 +43,8 @@ class FilterBarView(context: Context, attrs: AttributeSet? = null) : FrameLayout
 
     private fun setupGenreButton() {
         binding.btnGenre.setOnClickListener {
-            val items = arrayOf(context.getString(R.string.all)) + FilterData.genres.filter { it != "All" }
-            showPickerDialog(context.getString(R.string.genre), items) { which ->
+            val items = arrayOf(context.getString(com.a1hd.movies.R.string.all)) + FilterData.genres.filter { it != "All" }
+            showPickerDialog(context.getString(com.a1hd.movies.R.string.genre), items) { which ->
                 filters.genre = if (which == 0) "" else items[which]
                 updateChipStates()
                 onFiltersChanged?.invoke()
@@ -54,8 +54,8 @@ class FilterBarView(context: Context, attrs: AttributeSet? = null) : FrameLayout
 
     private fun setupCountryButton() {
         binding.btnCountry.setOnClickListener {
-            val items = arrayOf(context.getString(R.string.all)) + FilterData.countries
-            showPickerDialog(context.getString(R.string.country), items) { which ->
+            val items = arrayOf(context.getString(com.a1hd.movies.R.string.all)) + FilterData.countries
+            showPickerDialog(context.getString(com.a1hd.movies.R.string.country), items) { which ->
                 filters.country = if (which == 0) "" else items[which]
                 updateChipStates()
                 onFiltersChanged?.invoke()
@@ -65,8 +65,8 @@ class FilterBarView(context: Context, attrs: AttributeSet? = null) : FrameLayout
 
     private fun setupYearButton() {
         binding.btnYear.setOnClickListener {
-            val items = arrayOf(context.getString(R.string.all)) + FilterData.years.filter { it.isNotEmpty() }
-            showPickerDialog(context.getString(R.string.year), items) { which ->
+            val items = arrayOf(context.getString(com.a1hd.movies.R.string.all)) + FilterData.years.filter { it.isNotEmpty() }
+            showPickerDialog(context.getString(com.a1hd.movies.R.string.year), items) { which ->
                 filters.year = if (which == 0) "" else items[which]
                 updateChipStates()
                 onFiltersChanged?.invoke()
@@ -77,7 +77,7 @@ class FilterBarView(context: Context, attrs: AttributeSet? = null) : FrameLayout
     private fun setupSortButton() {
         binding.btnSort.setOnClickListener {
             val items = FilterSort.entries.map { it.displayName }.toTypedArray()
-            showPickerDialog(context.getString(R.string.sort), items) { which ->
+            showPickerDialog(context.getString(com.a1hd.movies.R.string.sort), items) { which ->
                 filters.sort = FilterSort.entries[which]
                 updateChipStates()
                 onFiltersChanged?.invoke()
@@ -106,11 +106,11 @@ class FilterBarView(context: Context, attrs: AttributeSet? = null) : FrameLayout
                 filters.year.isNotEmpty() || filters.sort != FilterSort.DEFAULT
 
     private fun updateChipStates() {
-        updateChip(binding.btnGenre, context.getString(R.string.genre), filters.genre)
-        updateChip(binding.btnCountry, context.getString(R.string.country), filters.country)
-        updateChip(binding.btnYear, context.getString(R.string.year), filters.year)
+        updateChip(binding.btnGenre, context.getString(com.a1hd.movies.R.string.genre), filters.genre)
+        updateChip(binding.btnCountry, context.getString(com.a1hd.movies.R.string.country), filters.country)
+        updateChip(binding.btnYear, context.getString(com.a1hd.movies.R.string.year), filters.year)
         val sortValue = if (filters.sort == FilterSort.DEFAULT) "" else filters.sort.displayName
-        updateChip(binding.btnSort, context.getString(R.string.sort), sortValue)
+        updateChip(binding.btnSort, context.getString(com.a1hd.movies.R.string.sort), sortValue)
         binding.btnReset.isVisible = hasActiveFilters
     }
 

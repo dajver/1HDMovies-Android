@@ -2,6 +2,7 @@ package com.a1hd.movies.api.repository
 
 import com.a1hd.movies.BuildConfig
 import com.a1hd.movies.api.RestHttpClient
+import com.a1hd.movies.api.repository.models.FilterOptions
 import com.a1hd.movies.etc.extensions.io
 import org.jsoup.Jsoup
 import javax.inject.Inject

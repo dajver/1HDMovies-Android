@@ -1,4 +1,4 @@
-package com.a1hd.movies.api.repository
+package com.a1hd.movies.api.repository.models
 
 import java.net.URLEncoder
 
