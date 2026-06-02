@@ -83,7 +83,12 @@ class VideoWebView(context: Context, attributeSet: AttributeSet) : FrameLayout(c
                 // Detect subtitle URLs from network requests
                 if (url.contains(".vtt") || url.contains(".srt")) {
                     if (!subtitleMap.containsKey(url)) {
-                        subtitleMap[url] = SubtitleTrack(label = "Unknown", url = url, language = "")
+                        val guessed = guessLanguageFromUrl(url)
+                        subtitleMap[url] = SubtitleTrack(
+                            label = guessed.ifEmpty { "Unknown" },
+                            url = url,
+                            language = guessed.lowercase()
+                        )
                     }
                 }
 
@@ -159,6 +164,61 @@ class VideoWebView(context: Context, attributeSet: AttributeSet) : FrameLayout(c
     val ivSourceAvailable
         get() = viewBinding.ivSourceAvailable
 
+    private fun guessLanguageFromUrl(url: String): String {
+        val lower = url.lowercase()
+        // Try to extract language from URL path/filename
+        val patterns = listOf(
+            Regex("""/([a-z]{2,3})\.vtt"""),                    // /en.vtt, /eng.vtt
+            Regex("""/([a-z]{2,3})\.srt"""),                    // /en.srt
+            Regex("""[/._-](english|eng|en)[/._-]"""),          // /english/ or .english.
+            Regex("""[/._-](spanish|spa|es)[/._-]"""),
+            Regex("""[/._-](french|fre|fra|fr)[/._-]"""),
+            Regex("""[/._-](german|ger|deu|de)[/._-]"""),
+            Regex("""[/._-](portuguese|por|pt)[/._-]"""),
+            Regex("""[/._-](italian|ita|it)[/._-]"""),
+            Regex("""[/._-](russian|rus|ru)[/._-]"""),
+            Regex("""[/._-](japanese|jpn|ja)[/._-]"""),
+            Regex("""[/._-](korean|kor|ko)[/._-]"""),
+            Regex("""[/._-](chinese|chi|zho|zh)[/._-]"""),
+            Regex("""[/._-](arabic|ara|ar)[/._-]"""),
+            Regex("""[/._-](hindi|hin|hi)[/._-]"""),
+            Regex("""[/._-](turkish|tur|tr)[/._-]"""),
+            Regex("""[/._-](dutch|nld|nl)[/._-]"""),
+            Regex("""[/._-](polish|pol|pl)[/._-]"""),
+            Regex("""[/._-](swedish|swe|sv)[/._-]"""),
+            Regex("""[/._-](norwegian|nor|no)[/._-]"""),
+            Regex("""[/._-](danish|dan|da)[/._-]"""),
+            Regex("""[/._-](finnish|fin|fi)[/._-]"""),
+            Regex("""[/._-](czech|ces|cs)[/._-]"""),
+            Regex("""[/._-](greek|ell|el)[/._-]"""),
+            Regex("""[/._-](hebrew|heb|he)[/._-]"""),
+            Regex("""[/._-](thai|tha|th)[/._-]"""),
+            Regex("""[/._-](vietnamese|vie|vi)[/._-]"""),
+            Regex("""[/._-](indonesian|ind|id)[/._-]"""),
+            Regex("""[/._-](malay|msa|ms)[/._-]"""),
+            Regex("""[/._-](romanian|ron|ro)[/._-]"""),
+            Regex("""[/._-](hungarian|hun|hu)[/._-]"""),
+            Regex("""[/._-](ukrainian|ukr|uk)[/._-]"""),
+            Regex("""[/._-](bulgarian|bul|bg)[/._-]"""),
+            Regex("""[/._-]([a-z]{2})[/._-]"""),                // generic 2-letter code
+        )
+        for (pattern in patterns) {
+            val match = pattern.find(lower)
+            if (match != null) {
+                return match.groupValues[1].replaceFirstChar { it.uppercase() }
+            }
+        }
+        return ""
+    }
+
+    private fun resolveSubtitleLabel(label: String, lang: String, url: String): String {
+        if (label.isNotEmpty()) return label
+        if (lang.isNotEmpty()) return lang.replaceFirstChar { it.uppercase() }
+        val guessed = guessLanguageFromUrl(url)
+        if (guessed.isNotEmpty()) return guessed
+        return "Unknown"
+    }
+
     private inner class SubtitleJsBridge {
         @JavascriptInterface
         fun onSubtitleDetected(jsonString: String) {
@@ -169,9 +229,9 @@ class VideoWebView(context: Context, attributeSet: AttributeSet) : FrameLayout(c
                 val lang = json.optString("lang", "")
                 if (url.isNotEmpty() && !subtitleMap.containsKey(url)) {
                     subtitleMap[url] = SubtitleTrack(
-                        label = label.ifEmpty { lang.ifEmpty { "Unknown" } },
+                        label = resolveSubtitleLabel(label, lang, url),
                         url = url,
-                        language = lang
+                        language = lang.ifEmpty { guessLanguageFromUrl(url).lowercase() }
                     )
                 }
             } catch (_: Exception) {}
