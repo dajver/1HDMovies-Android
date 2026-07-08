@@ -42,5 +42,12 @@ class WatchedEpisodeRepository @Inject constructor(
     suspend fun watchedLinksForShow(showLink: String): Set<String> =
         dao.getForShow(showLink).map { it.episodeLink }.toSet()
 
+    /**
+     * All watched episode links across every show. Episode links are globally unique, so matching
+     * an episode by its link (not by show) is correct — and it works with iOS/cloud data, which
+     * stores watched episodes keyed only by episodeLink (no showLink).
+     */
+    suspend fun allWatchedLinks(): Set<String> = dao.getAll().map { it.episodeLink }.toSet()
+
     suspend fun getAll(): List<WatchedEpisodeEntity> = dao.getAll()
 }

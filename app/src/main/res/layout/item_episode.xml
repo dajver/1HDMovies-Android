@@ -29,10 +29,10 @@
 
         <ImageView
             android:id="@+id/ivWatched"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
             android:layout_marginStart="6dp"
-            android:src="@drawable/ic_check"
+            android:src="@drawable/ic_check_circle_green"
             android:visibility="gone"
             tools:visibility="visible" />
 

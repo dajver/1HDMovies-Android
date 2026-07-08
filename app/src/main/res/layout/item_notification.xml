@@ -6,12 +6,15 @@
     android:background="@drawable/item_selected_background"
     android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:padding="10dp">
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp">
 
     <ImageView
         android:id="@+id/ivThumbnail"
-        android:layout_width="60dp"
-        android:layout_height="84dp"
+        android:layout_width="50dp"
+        android:layout_height="70dp"
         android:scaleType="centerCrop"
         android:src="@drawable/img_poster" />
 
@@ -29,7 +32,7 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:textColor="@android:color/white"
-            android:textSize="18sp"
+            android:textSize="16sp"
             android:textStyle="bold"
             tools:text="Show Name" />
 
@@ -38,8 +41,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:textColor="@android:color/holo_red_light"
-            android:textSize="14sp"
+            android:textColor="@color/accent_red"
+            android:textSize="13sp"
+            android:textStyle="bold"
             tools:text="3 new episodes" />
 
         <TextView
@@ -49,8 +53,8 @@
             android:layout_marginTop="2dp"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textColor="@android:color/white"
-            android:textSize="13sp"
+            android:textColor="#B3FFFFFF"
+            android:textSize="12sp"
             tools:text="Latest: 5 Episode Name" />
 
         <TextView
@@ -58,10 +62,19 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:textColor="@android:color/darker_gray"
+            android:textColor="#8E8E93"
             android:textSize="12sp"
             tools:text="2 hours ago" />
 
     </LinearLayout>
+
+    <View
+        android:id="@+id/vUnreadDot"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:layout_marginStart="10dp"
+        android:background="@drawable/notification_badge_background"
+        android:visibility="gone"
+        tools:visibility="visible" />
 
 </LinearLayout>

@@ -441,6 +441,21 @@ class FirebaseSyncService @Inject constructor(
         for (item in showNotificationDao.getAll()) uploadNotification(item)
     }
 
+    /** Immediately flags every cloud notification as read (mirrors iOS `markShowNotificationsRead`). */
+    suspend fun markAllNotificationsRead() {
+        val uid = uid ?: return
+        try {
+            val snapshot = col(uid, "showNotifications").get().await()
+            for (doc in snapshot.documents) {
+                if (doc.getBoolean("isRead") != true) {
+                    doc.reference.update("isRead", true).await()
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "markAllNotificationsRead failed: ${e.message}")
+        }
+    }
+
     private suspend fun downloadShowNotifications(uid: String) {
         val cloud = col(uid, "showNotifications").get().await()
         val localByLink = showNotificationDao.getAll().associateBy { it.showLink }

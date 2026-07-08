@@ -37,8 +37,7 @@ class NotificationsFragment: BaseFragment<FragmentNotificationsBinding>(Fragment
             binding.pbLoading.isVisible = it
         }
 
-        notificationsViewModel.load()
-        // Opening the screen clears the unread badge.
-        notificationsViewModel.markAllRead()
+        // Shows the list (with unread dots), then clears the unread badge.
+        notificationsViewModel.open()
     }
 }

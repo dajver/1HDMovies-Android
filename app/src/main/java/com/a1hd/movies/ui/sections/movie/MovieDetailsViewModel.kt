@@ -50,7 +50,7 @@ class MovieDetailsViewModel @Inject constructor(
         val seasons = model.seasonsList
         if (!seasons.isNullOrEmpty() && seasons.firstOrNull { it.isSelected } == null) {
             // Land on the current-watching season instead of always the last one.
-            val watched = watchedEpisodeRepository.watchedLinksForShow(model.linkToDetails)
+            val watched = watchedEpisodeRepository.allWatchedLinks()
             val selectedIndex = currentWatchingSeasonIndex(seasons, watched)
             seasons.onEach { it.isSelected = false }
             seasons.getOrNull(selectedIndex)?.isSelected = true
@@ -63,7 +63,7 @@ class MovieDetailsViewModel @Inject constructor(
         }
 
         fetchDetailsMoviesMutableLiveData.postValue(model)
-        refreshWatchedEpisodes(model.linkToDetails)
+        refreshWatchedEpisodes()
         watchedMovieMutableLiveData.postValue(watchedRepository.isWatched(model.linkToDetails))
     }
 
@@ -102,7 +102,7 @@ class MovieDetailsViewModel @Inject constructor(
         } else {
             watchedEpisodeRepository.markWatched(episode.link, showLink, seasonNumber, episode.episodeNumber)
         }
-        refreshWatchedEpisodes(showLink)
+        refreshWatchedEpisodes()
     }
 
     fun toggleMovieWatched() = launch {
@@ -116,8 +116,8 @@ class MovieDetailsViewModel @Inject constructor(
         }
     }
 
-    private fun refreshWatchedEpisodes(showLink: String) = launch {
-        watchedEpisodesMutableLiveData.postValue(watchedEpisodeRepository.watchedLinksForShow(showLink))
+    private fun refreshWatchedEpisodes() = launch {
+        watchedEpisodesMutableLiveData.postValue(watchedEpisodeRepository.allWatchedLinks())
     }
 
     fun getMovieName(): String? {

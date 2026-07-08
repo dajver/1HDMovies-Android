@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import com.a1hd.movies.db.entity.ShowNotificationEntity
 import com.a1hd.movies.db.repository.NotificationRepository
 import com.a1hd.movies.etc.extensions.launch
+import com.a1hd.movies.services.FirebaseSyncService
 import com.a1hd.movies.services.NewEpisodeService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -13,7 +14,8 @@ import javax.inject.Inject
 @HiltViewModel
 class NotificationsViewModel @Inject constructor(
     private val notificationRepository: NotificationRepository,
-    private val newEpisodeService: NewEpisodeService
+    private val newEpisodeService: NewEpisodeService,
+    private val syncService: FirebaseSyncService
 ): ViewModel() {
 
     private val notificationsMutableLiveData = MutableLiveData<List<ShowNotificationEntity>>()
@@ -26,8 +28,15 @@ class NotificationsViewModel @Inject constructor(
         notificationsMutableLiveData.postValue(notificationRepository.getAll())
     }
 
-    fun markAllRead() = launch {
+    /**
+     * Opens the screen: briefly show the unread dots, then mark everything read and re-post so the
+     * rows reflect the read state (dots gone) — mirrors iOS, where markAllRead re-renders the list.
+     */
+    fun open() = launch {
+        notificationsMutableLiveData.postValue(notificationRepository.getAll())
         notificationRepository.markAllRead()
+        syncService.markAllNotificationsRead()
+        notificationsMutableLiveData.postValue(notificationRepository.getAll())
     }
 
     fun refresh() = launch {

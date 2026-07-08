@@ -5,7 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.a1hd.movies.api.repository.MoviesDetailsDataModel
 import com.a1hd.movies.databinding.ItemDashboardBinding
-import com.a1hd.movies.ui.isTabletOrientation
+import com.a1hd.movies.ui.isTvDevice
 import com.a1hd.movies.ui.sections.favorite.adapter.holder.FavoritesHolder
 import javax.inject.Inject
 
@@ -29,7 +29,7 @@ class FavoritesRecyclerAdapter @Inject constructor(): RecyclerView.Adapter<Recyc
         val viewHolder = (holder as FavoritesHolder)
         viewHolder.bind(favoritesList[position], onFavoriteClickListener)
 
-        if (holder.itemView.context.isTabletOrientation()) {
+        if (holder.itemView.context.isTvDevice()) {
             viewHolder.itemView.setOnFocusChangeListener { v, hasFocus ->
                 v.isSelected = hasFocus
             }

@@ -3,6 +3,7 @@ package com.a1hd.movies.ui.sections.notifications.adapter
 import android.text.format.DateUtils
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.a1hd.movies.R
 import com.a1hd.movies.databinding.ItemNotificationBinding
@@ -39,6 +40,7 @@ class NotificationsRecyclerAdapter @Inject constructor() : RecyclerView.Adapter<
             binding.tvNewCount.text = context.getString(R.string.new_episodes_count, item.newCount)
             binding.tvLatest.text = context.getString(R.string.latest_episode, item.latestEpisodeLabel)
             binding.tvTime.text = DateUtils.getRelativeTimeSpanString(item.detectedAt)
+            binding.vUnreadDot.isVisible = !item.isRead
             if (item.thumbnail.isNotEmpty()) {
                 Glide.with(context).load(item.thumbnail).into(binding.ivThumbnail)
             }

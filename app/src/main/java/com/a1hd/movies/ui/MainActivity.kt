@@ -1,8 +1,10 @@
 package com.a1hd.movies.ui
 
 import android.annotation.SuppressLint
+import android.app.UiModeManager
 import android.content.Context
 import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
@@ -115,6 +117,15 @@ class MainActivity : BaseActivity<ActivityMainBinding>(ActivityMainBinding::infl
 }
 
 fun Context.isTvOrientation() = packageManager.hasSystemFeature("android.software.live_tv")
+
+/** True only on an actual Android TV — used to enable D-pad focus selection (not on touch tablets). */
+fun Context.isTvDevice(): Boolean {
+    val pm = packageManager
+    if (pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) return true
+    if (pm.hasSystemFeature("android.software.live_tv")) return true
+    val uiMode = getSystemService(Context.UI_MODE_SERVICE) as? UiModeManager
+    return uiMode?.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
+}
 
 fun Context.isTabletOrientation() =  ((resources.configuration.screenLayout and Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE)
 

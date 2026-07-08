@@ -49,6 +49,9 @@ class ContinueWatchingRepository @Inject constructor(
     suspend fun build(): List<ContinueWatchingItem> = io {
         val items = mutableListOf<ContinueWatchingItem>()
         val watchedShows = watchedRepository.watchedLinks()
+        // Global watched-episode map (episodeLink -> updatedAt); episode links are unique, and
+        // iOS/cloud data has no showLink, so we match by episode link rather than per-show.
+        val watchedByLink = watchedEpisodeRepository.getAll().associateBy({ it.episodeLink }, { it.updatedAt })
 
         // --- TV shows: favorited OR started-watching, not show-level-watched ---
         val shows = (favoriteRepository.fetchAllFavorites() + watchingShowRepository.getAll())
@@ -63,9 +66,7 @@ class ContinueWatchingRepository @Inject constructor(
             }
             if (ordered.isEmpty()) continue
 
-            val watchedEntities = watchedEpisodeRepository.getForShow(fav.linkToDetails)
-            val watchedSet = watchedEntities.map { it.episodeLink }.toSet()
-            val furthestIndex = ordered.indexOfLast { watchedSet.contains(it.episode.link) }
+            val furthestIndex = ordered.indexOfLast { watchedByLink.containsKey(it.episode.link) }
 
             var target: EpisodeRef? = null
             var isResume = false
@@ -85,7 +86,7 @@ class ContinueWatchingRepository @Inject constructor(
                     if (next != null) {
                         target = next
                         isResume = false
-                        recency = watchedEntities.find { it.episodeLink == furthest.episode.link }?.updatedAt ?: 0L
+                        recency = watchedByLink[furthest.episode.link] ?: 0L
                     }
                 }
             } else {

@@ -5,7 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.a1hd.movies.databinding.ItemDashboardBinding
 import com.a1hd.movies.api.repository.MoviesDataModel
-import com.a1hd.movies.ui.isTabletOrientation
+import com.a1hd.movies.ui.isTvDevice
 import com.a1hd.movies.ui.sections.alltvshows.adapter.holder.AllTvShowsHolder
 import javax.inject.Inject
 
@@ -30,7 +30,7 @@ class AllTvShowsRecyclerAdapter @Inject constructor() : RecyclerView.Adapter<Rec
         val model = tvSHowsList[position]
         viewHolder.bind(model, onTvShowsClickListener)
 
-        if (holder.itemView.context.isTabletOrientation()) {
+        if (holder.itemView.context.isTvDevice()) {
             if (model.isSelected) {
                 viewHolder.itemView.isSelected = model.isSelected
                 viewHolder.itemView.requestFocus()

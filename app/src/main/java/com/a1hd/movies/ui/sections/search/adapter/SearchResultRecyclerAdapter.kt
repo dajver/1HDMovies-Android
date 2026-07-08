@@ -5,7 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.a1hd.movies.databinding.ItemDashboardBinding
 import com.a1hd.movies.api.repository.MoviesDataModel
-import com.a1hd.movies.ui.isTabletOrientation
+import com.a1hd.movies.ui.isTvDevice
 import com.a1hd.movies.ui.sections.search.adapter.holder.SearchResultHolder
 import javax.inject.Inject
 
@@ -29,7 +29,7 @@ class SearchResultRecyclerAdapter @Inject constructor() : RecyclerView.Adapter<R
         val model = searchResultList[position]
         viewHolder.bind(model, onSearchResultClickListener)
 
-        if (holder.itemView.context.isTabletOrientation()) {
+        if (holder.itemView.context.isTvDevice()) {
             if (model.isSelected) {
                 viewHolder.itemView.isSelected = model.isSelected
 //                viewHolder.itemView.requestFocus()
