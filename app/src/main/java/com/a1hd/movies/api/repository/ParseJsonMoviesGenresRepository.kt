@@ -10,8 +10,12 @@ class ParseJsonMoviesGenresRepository @Inject constructor(
     private val restHttpClient: RestHttpClient
 ) {
 
-    suspend fun fetchMoviesByGenre(genre: GenresEnum, page: Int): List<MoviesDataModel> = io {
-        val doc = Jsoup.parse(restHttpClient.get("${genre.url}?page=$page"))
+    suspend fun fetchMoviesByGenre(genre: GenresEnum, page: Int): List<MoviesDataModel> =
+        fetchMoviesByUrl(genre.url, page)
+
+    /** URL-driven listing used by clickable detail tags (genre / actor / country / production / year). */
+    suspend fun fetchMoviesByUrl(url: String, page: Int): List<MoviesDataModel> = io {
+        val doc = Jsoup.parse(restHttpClient.get("$url?page=$page"))
         val moviesElements = doc.select("div.container").select("div.film-list").select("div.item-film")
         val filmVisualInformation = moviesElements.select("div.film-thumbnail").select("img.film-thumbnail-img")
         val filmTextInformation = moviesElements.select("div.film-detail")

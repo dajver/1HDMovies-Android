@@ -21,15 +21,15 @@ class MovieByGenreViewModel @Inject constructor(
     var currentPage = 1
     private var moviesGenreList = emptyList<MoviesDataModel>()
 
-    fun fetchMoviesByGenre(genre: GenresEnum) = launch {
+    fun fetchMoviesByUrl(url: String) = launch {
         if (moviesGenreList.isEmpty()) {
-            moviesGenreList = parseJsonMoviesGenresRepository.fetchMoviesByGenre(genre = genre, page = currentPage)
+            moviesGenreList = parseJsonMoviesGenresRepository.fetchMoviesByUrl(url, page = currentPage)
         }
         fetchMoviesGenreMutableLiveData.postValue(moviesGenreList)
     }
 
-    fun fetchPaginationMoviesByGenre(genre: GenresEnum) = launch {
-        moviesGenreList = parseJsonMoviesGenresRepository.fetchMoviesByGenre(genre = genre, page = currentPage)
+    fun fetchPaginationMoviesByUrl(url: String) = launch {
+        moviesGenreList = parseJsonMoviesGenresRepository.fetchMoviesByUrl(url, page = currentPage)
         fetchMoviesGenreMutableLiveData.postValue(moviesGenreList)
     }
 }

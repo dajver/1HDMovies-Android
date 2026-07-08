@@ -40,7 +40,21 @@ class ParseJsonMovieDetailsRepository @Inject constructor(
         } else {
             MoviesDetailsDataModel(title, thumbnail, linkToWatch, linkToMovieDetails, watchMovieLinkWithEpisodeId, type, description, quality, cast, genre, duration, country, imdb, release, production, getSeasons(doc))
         }
+        // Clickable tags parsed from the anchors inside div.others (populated fresh each open).
+        movieDetailsModel.genreTags = parseTags(others, "/genre/")
+        movieDetailsModel.castTags = parseTags(others, "/actor/")
+        movieDetailsModel.countryTags = parseTags(others, "/country/")
+        movieDetailsModel.productionTags = parseTags(others, "/production/")
+        movieDetailsModel.yearTags = parseTags(others, "/year/")
         movieDetailsModel
+    }
+
+    private fun parseTags(scope: org.jsoup.select.Elements, hrefContains: String): List<TagRef> {
+        return scope.select("a[href*=$hrefContains]").map { a ->
+            val href = a.attr("href")
+            val url = if (href.startsWith("http")) href else "${BuildConfig.BASE_URL}$href"
+            TagRef(a.text().trim(), url)
+        }.filter { it.name.isNotBlank() }.distinctBy { it.url }
     }
 
 
@@ -101,7 +115,19 @@ data class MoviesDetailsDataModel(
     val seasonsList: MutableList<MovieSeasonDataModel>? = mutableListOf()
 ) {
     var addedAt: Long? = null
+
+    // Clickable metadata tags — populated fresh on each details fetch, not persisted.
+    @Transient var genreTags: List<TagRef> = emptyList()
+    @Transient var castTags: List<TagRef> = emptyList()
+    @Transient var countryTags: List<TagRef> = emptyList()
+    @Transient var productionTags: List<TagRef> = emptyList()
+    @Transient var yearTags: List<TagRef> = emptyList()
 }
+
+data class TagRef(
+    val name: String,
+    val url: String
+)
 
 data class MovieSeasonDataModel(
     val seasonId: String,

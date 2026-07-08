@@ -114,6 +114,16 @@
                             android:padding="10dp"
                             android:text="@string/mark_watched" />
 
+                        <Button
+                            android:id="@+id/btnTrailer"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:background="@drawable/button_blue_background"
+                            android:focusable="true"
+                            android:padding="10dp"
+                            android:text="@string/trailer" />
+
                     </LinearLayout>
 
                     <TextView
@@ -141,15 +151,21 @@
                             android:textSize="18sp"
                             android:textStyle="bold" />
 
-                        <TextView
-                            android:id="@+id/tvGenre"
-                            android:layout_width="match_parent"
+                        <HorizontalScrollView
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:layout_marginStart="5dp"
                             android:layout_marginTop="20dp"
-                            android:background="@android:color/transparent"
-                            android:textColor="@android:color/white"
-                            android:textSize="18sp" />
+                            android:scrollbars="none">
+
+                            <LinearLayout
+                                android:id="@+id/llGenre"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal" />
+
+                        </HorizontalScrollView>
 
                     </LinearLayout>
 
@@ -167,14 +183,20 @@
                             android:textSize="18sp"
                             android:textStyle="bold" />
 
-                        <TextView
-                            android:id="@+id/tvCasts"
-                            android:layout_width="match_parent"
+                        <HorizontalScrollView
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:layout_marginStart="5dp"
-                            android:background="@android:color/transparent"
-                            android:textColor="@android:color/white"
-                            android:textSize="18sp" />
+                            android:scrollbars="none">
+
+                            <LinearLayout
+                                android:id="@+id/llCasts"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal" />
+
+                        </HorizontalScrollView>
 
                     </LinearLayout>
 
@@ -242,14 +264,20 @@
                             android:textSize="18sp"
                             android:textStyle="bold" />
 
-                        <TextView
-                            android:id="@+id/tvCountry"
-                            android:layout_width="match_parent"
+                        <HorizontalScrollView
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:layout_marginStart="5dp"
-                            android:background="@android:color/transparent"
-                            android:textColor="@android:color/white"
-                            android:textSize="18sp" />
+                            android:scrollbars="none">
+
+                            <LinearLayout
+                                android:id="@+id/llCountry"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal" />
+
+                        </HorizontalScrollView>
 
                     </LinearLayout>
 
@@ -267,14 +295,20 @@
                             android:textSize="18sp"
                             android:textStyle="bold" />
 
-                        <TextView
-                            android:id="@+id/tvRelease"
-                            android:layout_width="match_parent"
+                        <HorizontalScrollView
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:layout_marginStart="5dp"
-                            android:background="@android:color/transparent"
-                            android:textColor="@android:color/white"
-                            android:textSize="18sp" />
+                            android:scrollbars="none">
+
+                            <LinearLayout
+                                android:id="@+id/llRelease"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal" />
+
+                        </HorizontalScrollView>
 
                     </LinearLayout>
 
@@ -292,14 +326,20 @@
                             android:textSize="18sp"
                             android:textStyle="bold" />
 
-                        <TextView
-                            android:id="@+id/tvProduction"
-                            android:layout_width="match_parent"
+                        <HorizontalScrollView
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:layout_marginStart="5dp"
-                            android:background="@android:color/transparent"
-                            android:textColor="@android:color/white"
-                            android:textSize="18sp" />
+                            android:scrollbars="none">
+
+                            <LinearLayout
+                                android:id="@+id/llProduction"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal" />
+
+                        </HorizontalScrollView>
 
                     </LinearLayout>
 

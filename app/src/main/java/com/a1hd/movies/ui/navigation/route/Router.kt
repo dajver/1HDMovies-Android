@@ -34,6 +34,7 @@ sealed class Router(val clearStack: Boolean = false) {
     object AllMovies : Router()
     object AllTvShows : Router()
     class MovieByGenre(val movieGenre: GenresEnum?) : Router()
+    class Tag(val title: String, val url: String) : Router()
     object Search : Router()
     object Favorites : Router()
     object Watched : Router()
@@ -51,6 +52,7 @@ fun Router.toFragment(): Fragment {
         Router.AllMovies -> AllMoviesFragment()
         Router.AllTvShows -> AllTvShowsFragment()
         is Router.MovieByGenre -> MovieByGenreFragment.newInstance(movieGenre)
+        is Router.Tag -> MovieByGenreFragment.newInstanceForTag(title, url)
         Router.Search -> SearchFragment()
         Router.Favorites -> FavoriteFragment()
         Router.Watched -> WatchedFragment()
@@ -68,7 +70,7 @@ fun Fragment.toRouter(): Router {
         is WatchMovieFragment -> Router.WatchMovie(movieUrl, movieTitle, episodes, currentEpisodeIndex, showLink, thumbnail, contentType, seasonNumber)
         is AllMoviesFragment -> Router.AllMovies
         is AllTvShowsFragment -> Router.AllTvShows
-        is MovieByGenreFragment -> Router.MovieByGenre(movieGenre)
+        is MovieByGenreFragment -> if (movieGenre != null) Router.MovieByGenre(movieGenre) else Router.Tag(tagTitle ?: "", tagUrl ?: "")
         is SearchFragment -> Router.Search
         is FavoriteFragment -> Router.Favorites
         is WatchedFragment -> Router.Watched

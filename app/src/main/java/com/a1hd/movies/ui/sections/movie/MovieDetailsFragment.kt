@@ -1,13 +1,22 @@
 package com.a1hd.movies.ui.sections.movie
 
+import android.app.Dialog
+import android.content.Intent
+import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.a1hd.movies.R
 import com.a1hd.movies.api.repository.MoviesDetailsDataModel
+import com.a1hd.movies.api.repository.TagRef
 import com.a1hd.movies.databinding.FragmentMovieDetailsBinding
 import com.a1hd.movies.ui.base.BaseFragment
 import com.a1hd.movies.ui.navigation.route.Router
@@ -89,14 +98,18 @@ class MovieDetailsFragment: BaseFragment<FragmentMovieDetailsBinding>(FragmentMo
 
             binding.tvName.text = movie.name
             binding.tvDescription.text = movie.description
-            binding.tvCasts.text = movie.cast
-            binding.tvGenre.text = movie.genre
             binding.tvDuration.text = getString(R.string.min, movie.duration)
-            binding.tvCountry.text = movie.country
             binding.tvIMDB.text = movie.imdb
-            binding.tvRelease.text = movie.release
-            binding.tvProduction.text = movie.production
             Glide.with(requireContext()).load(movie.thumbnail).into(binding.ivPoster)
+
+            populateChips(binding.llGenre, movie.genreTags, movie.genre)
+            populateChips(binding.llCasts, movie.castTags, movie.cast)
+            populateChips(binding.llCountry, movie.countryTags, movie.country)
+            populateChips(binding.llRelease, movie.yearTags, movie.release)
+            populateChips(binding.llProduction, movie.productionTags, movie.production)
+
+            binding.ivPoster.setOnClickListener { showFullPoster(movie.thumbnail) }
+            binding.btnTrailer.setOnClickListener { openTrailer(movie.name, movie.release) }
 
             binding.btnWatchMovie.isVisible = movie.seasonsList.isNullOrEmpty()
             binding.rvSeasons.isVisible = !movie.seasonsList.isNullOrEmpty()
@@ -149,6 +162,67 @@ class MovieDetailsFragment: BaseFragment<FragmentMovieDetailsBinding>(FragmentMo
         movieDetailsViewModel.fetchYouMayAlsoLikeLiveData.observe(viewLifecycleOwner) {
             youMayAlsoLikeRecyclerAdapter.setMovies(it.toMutableList())
         }
+    }
+
+    /** Renders a metadata list as clickable chips that open the matching listing. */
+    private fun populateChips(container: LinearLayout, tags: List<TagRef>, fallback: String) {
+        container.removeAllViews()
+        if (tags.isEmpty()) {
+            if (fallback.isNotBlank()) container.addView(createChip(fallback, null))
+            return
+        }
+        tags.forEach { tag -> container.addView(createChip(tag.name, tag)) }
+    }
+
+    private fun createChip(text: String, tag: TagRef?): View {
+        val density = resources.displayMetrics.density
+        val padH = (12 * density).toInt()
+        val padV = (6 * density).toInt()
+        val chip = TextView(requireContext()).apply {
+            this.text = text
+            setTextColor(Color.WHITE)
+            textSize = 16f
+            background = ContextCompat.getDrawable(requireContext(), R.drawable.chip_background)
+            setPadding(padH, padV, padH, padV)
+        }
+        chip.layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply { marginEnd = (8 * density).toInt() }
+        if (tag != null) {
+            chip.isFocusable = true
+            chip.isClickable = true
+            chip.setOnClickListener { navigationRouter.navigateTo(Router.Tag(tag.name, tag.url)) }
+        }
+        return chip
+    }
+
+    /** Opens a YouTube search for the trailer (the site has no trailer data). */
+    private fun openTrailer(name: String, year: String) {
+        val query = Uri.encode("$name $year trailer".trim())
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/results?search_query=$query"))
+        try {
+            startActivity(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun showFullPoster(url: String) {
+        if (url.isEmpty()) return
+        val dialog = Dialog(requireContext(), android.R.style.Theme_Black_NoTitleBar_Fullscreen)
+        val image = ImageView(requireContext()).apply {
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            setBackgroundColor(Color.BLACK)
+            isFocusable = true
+        }
+        dialog.setContentView(
+            image,
+            ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        )
+        Glide.with(this).load(url).into(image)
+        image.setOnClickListener { dialog.dismiss() }
+        dialog.show()
     }
 
     private fun showEpisodeWatchedMenu(episode: com.a1hd.movies.api.repository.MovieEpisodesDataModel) {

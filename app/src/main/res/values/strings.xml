@@ -74,6 +74,7 @@
     <string name="remove_from_continue_watching">Remove from Continue Watching</string>
     <string name="open_details">Open</string>
     <string name="mark_watched">Mark Watched</string>
+    <string name="trailer">Trailer</string>
     <string name="mark_unwatched">Mark Unwatched</string>
     <string name="mark_episode_watched">Mark episode watched</string>
     <string name="mark_episode_unwatched">Mark episode unwatched</string>
