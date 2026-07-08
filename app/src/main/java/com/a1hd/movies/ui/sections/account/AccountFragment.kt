@@ -81,7 +81,10 @@ class AccountFragment : BaseFragment<FragmentAccountBinding>(FragmentAccountBind
         binding.llSignIn.isVisible = !signedIn
 
         if (signedIn) {
-            binding.tvUserName.text = getString(R.string.signed_in_as, authService.displayName ?: authService.email ?: "User")
+            binding.tvUserName.text = authService.displayName ?: authService.email ?: "User"
+            val email = authService.email
+            binding.tvUserEmail.text = email ?: ""
+            binding.tvUserEmail.isVisible = !email.isNullOrEmpty()
 
             val lastSync = syncService.lastSyncDate
             if (lastSync > 0) {

@@ -32,9 +32,8 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:paddingTop="10dp"
+                android:gravity="center_vertical"
+                android:paddingStart="8dp"
                 android:text="@string/filter"
                 android:textColor="@android:color/white"
                 android:textSize="24sp" />

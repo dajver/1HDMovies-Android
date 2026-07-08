@@ -1,133 +1,188 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="24dp"
-    android:gravity="center_horizontal"
     android:fitsSystemWindows="true">
 
-    <ImageButton
-        android:id="@+id/btnBack"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
-        android:layout_gravity="start"
-        android:background="@drawable/icon_button_background"
-        android:contentDescription="@android:string/cancel"
-        android:focusable="true"
-        android:padding="10dp"
-        android:scaleType="fitCenter"
-        android:src="@drawable/ic_back" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/account"
-        android:textSize="24sp"
-        android:textColor="@android:color/white"
-        android:layout_marginBottom="24dp" />
-
-    <!-- Sign In state (shown when not signed in) -->
+    <!-- Inline header -->
     <LinearLayout
-        android:id="@+id/llSignIn"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center_horizontal"
-        android:visibility="visible">
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/btnBack"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/icon_button_background"
+            android:contentDescription="@android:string/cancel"
+            android:focusable="true"
+            android:padding="10dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_back" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/sign_in_description"
-            android:textColor="#CCCCCC"
-            android:textSize="16sp"
-            android:gravity="center"
-            android:lineSpacingExtra="4dp"
-            android:layout_marginBottom="24dp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/sign_in_benefit_sync"
-            android:textColor="#AAAAAA"
-            android:textSize="14sp"
-            android:drawablePadding="12dp"
             android:gravity="center_vertical"
-            android:layout_marginBottom="12dp"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/sign_in_benefit_backup"
-            android:textColor="#AAAAAA"
-            android:textSize="14sp"
-            android:drawablePadding="12dp"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="12dp"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/sign_in_benefit_devices"
-            android:textColor="#AAAAAA"
-            android:textSize="14sp"
-            android:drawablePadding="12dp"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="24dp"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp" />
-
-        <Button
-            android:id="@+id/btnSignIn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/sign_in_with_google" />
+            android:paddingStart="8dp"
+            android:text="@string/account"
+            android:textColor="@android:color/white"
+            android:textSize="24sp" />
 
     </LinearLayout>
 
-    <!-- Signed in state -->
+    <!-- Centered content -->
     <LinearLayout
-        android:id="@+id/llSignedIn"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
         android:orientation="vertical"
-        android:gravity="center_horizontal"
-        android:visibility="gone">
+        android:paddingStart="32dp"
+        android:paddingEnd="32dp">
 
-        <TextView
-            android:id="@+id/tvUserName"
-            android:layout_width="wrap_content"
+        <!-- Signed-out state -->
+        <LinearLayout
+            android:id="@+id/llSignIn"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/white"
-            android:textSize="18sp"
-            android:layout_marginBottom="8dp" />
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tvLastSync"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="#AAAAAA"
-            android:textSize="14sp"
-            android:layout_marginBottom="24dp" />
+            <ImageView
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_marginBottom="16dp"
+                android:src="@drawable/ic_person_circle" />
 
-        <Button
-            android:id="@+id/btnSync"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/sync_now"
-            android:layout_marginBottom="16dp" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                android:gravity="center"
+                android:lineSpacingExtra="4dp"
+                android:text="@string/sign_in_description"
+                android:textColor="#CCCCCC"
+                android:textSize="16sp" />
 
-        <Button
-            android:id="@+id/btnSignOut"
-            android:layout_width="wrap_content"
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:gravity="center"
+                android:text="@string/sign_in_benefit_sync"
+                android:textColor="#8E8E93"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:gravity="center"
+                android:text="@string/sign_in_benefit_backup"
+                android:textColor="#8E8E93"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="28dp"
+                android:gravity="center"
+                android:text="@string/sign_in_benefit_devices"
+                android:textColor="#8E8E93"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/btnSignIn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_white_rounded"
+                android:focusable="true"
+                android:paddingTop="14dp"
+                android:paddingBottom="14dp"
+                android:text="@string/sign_in_with_google"
+                android:textAllCaps="false"
+                android:textColor="@android:color/black"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- Signed-in state -->
+        <LinearLayout
+            android:id="@+id/llSignedIn"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/sign_out"
-            style="@style/Widget.Material3.Button.TextButton" />
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <ImageView
+                android:layout_width="88dp"
+                android:layout_height="88dp"
+                android:layout_marginBottom="16dp"
+                android:src="@drawable/ic_person_circle" />
+
+            <TextView
+                android:id="@+id/tvUserName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                tools:text="Gleb" />
+
+            <TextView
+                android:id="@+id/tvUserEmail"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="28dp"
+                android:textColor="#8E8E93"
+                android:textSize="14sp"
+                tools:text="name@example.com" />
+
+            <Button
+                android:id="@+id/btnSync"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_secondary_rounded"
+                android:focusable="true"
+                android:paddingTop="14dp"
+                android:paddingBottom="14dp"
+                android:text="@string/sync_now"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/tvLastSync"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="24dp"
+                android:textColor="#8E8E93"
+                android:textSize="12sp"
+                tools:text="Last sync: Jul 08, 2026 14:00" />
+
+            <Button
+                android:id="@+id/btnSignOut"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                android:focusable="true"
+                android:text="@string/sign_out"
+                android:textAllCaps="false"
+                android:textColor="@color/accent_red"
+                android:textSize="16sp" />
+
+        </LinearLayout>
 
     </LinearLayout>
 
