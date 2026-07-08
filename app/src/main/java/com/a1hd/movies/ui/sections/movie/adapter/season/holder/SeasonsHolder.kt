@@ -10,26 +10,13 @@ import com.a1hd.movies.databinding.ItemSeasonBinding
 class SeasonsHolder(private val binding: ItemSeasonBinding) : RecyclerView.ViewHolder(binding.root) {
 
     fun bind(movieData: MovieSeasonDataModel) {
-        if (movieData.isSelected) {
-            binding.tvSeason.setTextColor(ContextCompat.getColor(itemView.context, R.color.selected_background))
-            binding.tvSeason.setTypeface(binding.tvSeason.typeface, Typeface.BOLD)
-        } else {
-            binding.tvSeason.setTextColor(ContextCompat.getColor(itemView.context, android.R.color.white))
-            binding.tvSeason.setTypeface(binding.tvSeason.typeface, Typeface.NORMAL)
-        }
-
+        // Selection is shown by the red pill background; keep the text white, bold when selected.
+        binding.tvSeason.setTextColor(ContextCompat.getColor(itemView.context, android.R.color.white))
+        binding.tvSeason.setTypeface(null, if (movieData.isSelected) Typeface.BOLD else Typeface.NORMAL)
         binding.tvSeason.text = movieData.seasonNumber
     }
 
     fun select(hasFocus: Boolean, movieData: MovieSeasonDataModel) {
-        if (hasFocus && movieData.isSelected) {
-            binding.tvSeason.setTextColor(ContextCompat.getColor(itemView.context, android.R.color.white))
-        } else {
-            if (movieData.isSelected) {
-                binding.tvSeason.setTextColor(ContextCompat.getColor(itemView.context, R.color.selected_background))
-            } else {
-                binding.tvSeason.setTextColor(ContextCompat.getColor(itemView.context, android.R.color.white))
-            }
-        }
+        binding.tvSeason.setTextColor(ContextCompat.getColor(itemView.context, android.R.color.white))
     }
 }

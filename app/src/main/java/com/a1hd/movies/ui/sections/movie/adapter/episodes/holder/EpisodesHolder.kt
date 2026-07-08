@@ -12,27 +12,14 @@ class EpisodesHolder(private val binding: ItemEpisodeBinding) : RecyclerView.Vie
 
     fun bind(movieData: MovieEpisodesDataModel, isWatched: Boolean = false) {
         binding.ivWatched.isVisible = isWatched
-        if (movieData.isSelected) {
-            binding.tvEpisode.setTextColor(ContextCompat.getColor(itemView.context, R.color.selected_background))
-            binding.tvEpisode.setTypeface(binding.tvEpisode.typeface, Typeface.BOLD)
-        } else {
-            binding.tvEpisode.setTextColor(ContextCompat.getColor(itemView.context, android.R.color.white))
-            binding.tvEpisode.setTypeface(binding.tvEpisode.typeface, Typeface.NORMAL)
-        }
-
+        // Selection is shown by the red pill background; keep the text white, bold when selected.
+        binding.tvEpisode.setTextColor(ContextCompat.getColor(itemView.context, android.R.color.white))
+        binding.tvEpisode.setTypeface(null, if (movieData.isSelected) Typeface.BOLD else Typeface.NORMAL)
         binding.tvEpisode.text = movieData.episodeNumber
         binding.tvEpisodeName.text = movieData.episodeName
     }
 
     fun select(hasFocus: Boolean, movieData: MovieEpisodesDataModel) {
-        if (hasFocus && movieData.isSelected) {
-            binding.tvEpisode.setTextColor(ContextCompat.getColor(itemView.context, android.R.color.white))
-        } else {
-            if (movieData.isSelected) {
-                binding.tvEpisode.setTextColor(ContextCompat.getColor(itemView.context, R.color.selected_background))
-            } else {
-                binding.tvEpisode.setTextColor(ContextCompat.getColor(itemView.context, android.R.color.white))
-            }
-        }
+        binding.tvEpisode.setTextColor(ContextCompat.getColor(itemView.context, android.R.color.white))
     }
 }

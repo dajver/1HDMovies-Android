@@ -39,14 +39,46 @@
                     android:orientation="vertical"
                     android:padding="10dp">
 
-                    <TextView
-                        android:id="@+id/tvName"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:background="@android:color/transparent"
-                        android:textColor="@android:color/white"
-                        android:textSize="24sp"
-                        tools:text="Title Name" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvName"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@android:color/transparent"
+                            android:textColor="@android:color/white"
+                            android:textSize="24sp"
+                            tools:text="Title Name" />
+
+                        <ImageButton
+                            android:id="@+id/btnFavorites"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:background="@drawable/icon_button_background"
+                            android:contentDescription="@string/add_favorites"
+                            android:focusable="true"
+                            android:padding="12dp"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/ic_favorites" />
+
+                        <ImageButton
+                            android:id="@+id/btnWatched"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:layout_marginStart="8dp"
+                            android:background="@drawable/icon_button_background"
+                            android:contentDescription="@string/mark_watched"
+                            android:focusable="true"
+                            android:padding="12dp"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/ic_eye" />
+
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/tvDescription"
@@ -265,55 +297,35 @@
 
                     </LinearLayout>
 
-                    <LinearLayout
+                    <Button
+                        android:id="@+id/btnWatchMovie"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+                        android:layout_marginTop="20dp"
+                        android:background="@drawable/button_watch_now"
+                        android:focusable="true"
+                        android:paddingTop="14dp"
+                        android:paddingBottom="14dp"
+                        android:textAllCaps="false"
+                        android:textColor="@android:color/white"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:text="@string/watch_now" />
 
-                        <Button
-                            android:id="@+id/btnFavorites"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="20dp"
-                            android:background="@drawable/button_orange_background"
-                            android:focusable="true"
-                            android:padding="10dp"
-                            android:text="@string/add_favorites" />
-
-                        <Button
-                            android:id="@+id/btnWatchMovie"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="20dp"
-                            android:layout_marginStart="10dp"
-                            android:background="@drawable/button_blue_background"
-                            android:focusable="true"
-                            android:padding="10dp"
-                            android:text="@string/watch_movie" />
-
-                        <Button
-                            android:id="@+id/btnWatched"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="20dp"
-                            android:layout_marginStart="10dp"
-                            android:background="@drawable/button_orange_background"
-                            android:focusable="true"
-                            android:padding="10dp"
-                            android:text="@string/mark_watched" />
-
-                        <Button
-                            android:id="@+id/btnTrailer"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="20dp"
-                            android:layout_marginStart="10dp"
-                            android:background="@drawable/button_blue_background"
-                            android:focusable="true"
-                            android:padding="10dp"
-                            android:text="@string/trailer" />
-
-                    </LinearLayout>
+                    <Button
+                        android:id="@+id/btnTrailer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/button_trailer"
+                        android:focusable="true"
+                        android:paddingTop="14dp"
+                        android:paddingBottom="14dp"
+                        android:textAllCaps="false"
+                        android:textColor="@android:color/white"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:text="@string/trailer" />
 
                 </LinearLayout>
 
@@ -348,20 +360,48 @@
 
             </LinearLayout>
 
+            <TextView
+                android:id="@+id/tvSeasonsLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:paddingStart="15dp"
+                android:paddingEnd="15dp"
+                android:text="@string/seasons"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvSeasons"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="6dp"
                 android:orientation="horizontal"
                 app:layoutManager=".ui.sections.dashboard.manager.TVLinearLayoutManager"
                 tools:listitem="@layout/item_season" />
+
+            <TextView
+                android:id="@+id/tvEpisodesLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:paddingStart="15dp"
+                android:paddingEnd="15dp"
+                android:text="@string/episodes"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:visibility="visible" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rvEpisode"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="6dp"
                 android:orientation="horizontal"
                 app:layoutManager=".ui.sections.dashboard.manager.TVLinearLayoutManager"
                 tools:listitem="@layout/item_episode" />

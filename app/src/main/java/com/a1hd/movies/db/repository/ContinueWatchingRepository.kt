@@ -34,6 +34,7 @@ data class ContinueWatchingItem(
 @Singleton
 class ContinueWatchingRepository @Inject constructor(
     private val favoriteRepository: FavoriteRepository,
+    private val watchingShowRepository: WatchingShowRepository,
     private val watchedRepository: WatchedRepository,
     private val watchedEpisodeRepository: WatchedEpisodeRepository,
     private val playbackProgressRepository: PlaybackProgressRepository
@@ -49,9 +50,11 @@ class ContinueWatchingRepository @Inject constructor(
         val items = mutableListOf<ContinueWatchingItem>()
         val watchedShows = watchedRepository.watchedLinks()
 
-        // --- TV shows: favorited, not show-level-watched, with something to continue ---
-        for (fav in favoriteRepository.fetchAllFavorites()) {
-            if (fav.type != MovieType.TV_SHOW) continue
+        // --- TV shows: favorited OR started-watching, not show-level-watched ---
+        val shows = (favoriteRepository.fetchAllFavorites() + watchingShowRepository.getAll())
+            .filter { it.type == MovieType.TV_SHOW }
+            .distinctBy { it.linkToDetails }
+        for (fav in shows) {
             if (watchedShows.contains(fav.linkToDetails)) continue
             val seasons = fav.seasonsList ?: continue
 
@@ -154,6 +157,7 @@ class ContinueWatchingRepository @Inject constructor(
         if (item.isShow) {
             watchedRepository.markWatched(item.id, item.title, item.thumbnail, MovieType.TV_SHOW.name)
             playbackProgressRepository.clear(item.watchUrl)
+            watchingShowRepository.remove(item.id)
         } else {
             playbackProgressRepository.clear(item.id)
         }

@@ -37,7 +37,6 @@ class EpisodesRecyclerAdapter @Inject constructor(): RecyclerView.Adapter<Recycl
         val model = episodesList[position]
         viewHolder.bind(model, watchedLinks.contains(model.link))
 
-        holder.itemView.isFocusedByDefault = true
         holder.itemView.isSelected = model.isSelected
         viewHolder.select(model.isSelected, model)
 

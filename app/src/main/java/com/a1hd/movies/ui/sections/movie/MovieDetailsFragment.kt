@@ -62,6 +62,7 @@ class MovieDetailsFragment: BaseFragment<FragmentMovieDetailsBinding>(FragmentMo
             episodesRecyclerAdapter.setEpisodes(it.episodes)
         }
         episodesRecyclerAdapter.onEpisodeClickListener = { episode ->
+            movieDetailsViewModel.rememberWatchingShow()
             val details = movieDetailsViewModel.getDetails()
             val selectedSeason = movieDetailsViewModel.getSelectedSeason()
             val episodes = selectedSeason?.episodes?.let { ArrayList(it) }
@@ -86,9 +87,7 @@ class MovieDetailsFragment: BaseFragment<FragmentMovieDetailsBinding>(FragmentMo
             navigationRouter.navigateTo(Router.MovieDetails(it.link))
         }
         binding.rvSeasons.adapter = seasonsRecyclerAdapter
-        binding.rvSeasons.addItemDecoration(divider)
         binding.rvEpisode.adapter = episodesRecyclerAdapter
-        binding.rvEpisode.addItemDecoration(divider)
         binding.rvYouMayAlsoLike.adapter = youMayAlsoLikeRecyclerAdapter
 
         movieDetailsViewModel.fetchDetails(movieUrl!!)
@@ -100,6 +99,8 @@ class MovieDetailsFragment: BaseFragment<FragmentMovieDetailsBinding>(FragmentMo
             binding.tvDescription.text = movie.description
             binding.tvDuration.text = getString(R.string.min, movie.duration)
             binding.tvIMDB.text = movie.imdb
+            binding.tvQuality.text = movie.quality
+            binding.tvQuality.isVisible = movie.quality.isNotBlank()
             Glide.with(requireContext()).load(movie.thumbnail).into(binding.ivPoster)
 
             populateChips(binding.llGenre, movie.genreTags, movie.genre)
@@ -111,9 +112,12 @@ class MovieDetailsFragment: BaseFragment<FragmentMovieDetailsBinding>(FragmentMo
             binding.ivPoster.setOnClickListener { showFullPoster(movie.thumbnail) }
             binding.btnTrailer.setOnClickListener { openTrailer(movie.name, movie.release) }
 
-            binding.btnWatchMovie.isVisible = movie.seasonsList.isNullOrEmpty()
-            binding.rvSeasons.isVisible = !movie.seasonsList.isNullOrEmpty()
-            binding.rvEpisode.isVisible = !movie.seasonsList?.lastOrNull()?.episodes.isNullOrEmpty()
+            val isTvShow = !movie.seasonsList.isNullOrEmpty()
+            binding.btnWatchMovie.isVisible = !isTvShow
+            binding.tvSeasonsLabel.isVisible = isTvShow
+            binding.rvSeasons.isVisible = isTvShow
+            binding.tvEpisodesLabel.isVisible = isTvShow
+            binding.rvEpisode.isVisible = isTvShow
 
             val seasons = movie.seasonsList
             if (!seasons.isNullOrEmpty()) {
@@ -153,8 +157,11 @@ class MovieDetailsFragment: BaseFragment<FragmentMovieDetailsBinding>(FragmentMo
             episodesRecyclerAdapter.setWatchedLinks(links)
         }
         movieDetailsViewModel.watchedMovieLiveData.observe(viewLifecycleOwner) { isWatched ->
-            binding.btnWatched.text = getString(
-                if (isWatched) R.string.mark_unwatched else R.string.mark_watched
+            binding.btnWatched.setColorFilter(
+                ContextCompat.getColor(
+                    requireContext(),
+                    if (isWatched) android.R.color.holo_green_light else android.R.color.white
+                )
             )
         }
 
@@ -240,11 +247,10 @@ class MovieDetailsFragment: BaseFragment<FragmentMovieDetailsBinding>(FragmentMo
     }
 
     private fun addFavoriteButtonState(movie: MoviesDetailsDataModel) {
-        binding.btnFavorites.text = if (movieDetailsViewModel.hasMovie(movie)) {
-            getString(R.string.remove_favorites)
-        } else {
-            getString(R.string.add_favorites)
-        }
+        val isFavorite = movieDetailsViewModel.hasMovie(movie)
+        binding.btnFavorites.setColorFilter(
+            ContextCompat.getColor(requireContext(), if (isFavorite) R.color.accent_red else android.R.color.white)
+        )
     }
 
     companion object {

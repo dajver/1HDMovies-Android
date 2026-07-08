@@ -38,8 +38,8 @@ internal class ViewPagerAdapter(private val context: Context) : PagerAdapter() {
         Glide.with(context).load(model.thumbnail).into(binding.ivPoster)
         binding.tvTitle.text = model.name
         binding.tvDescription.text = model.description
-        binding.tvQuality.text = model.quality
-        binding.btnWatchMovie.setOnClickListener {
+        binding.tvQuality.text = model.quality.replace(", ", " · ")
+        binding.root.setOnClickListener {
             onMostPopularMovieClickListener.invoke(model)
         }
         container.addView(binding.root)

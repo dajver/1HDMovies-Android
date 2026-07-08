@@ -33,10 +33,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="top"
-                android:background="@android:color/transparent"
-                android:gravity="start"
+                android:background="@drawable/quality_badge_background"
+                android:gravity="center"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp"
+                android:paddingTop="1dp"
+                android:paddingBottom="1dp"
                 android:textColor="@android:color/white"
-                android:textSize="18sp"
+                android:textSize="14sp"
+                android:textStyle="bold"
                 tools:text="HD" />
 
             <TextView

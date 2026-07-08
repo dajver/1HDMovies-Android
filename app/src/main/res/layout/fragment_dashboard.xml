@@ -40,7 +40,7 @@
                 android:focusableInTouchMode="true"
                 android:focusedByDefault="true"
                 android:padding="10dp"
-                android:src="@drawable/home_button_selected" />
+                android:src="@drawable/ic_tab_home" />
 
             <View
                 android:layout_width="0dp"
@@ -54,7 +54,7 @@
                 android:background="@android:color/transparent"
                 android:focusable="true"
                 android:padding="10dp"
-                android:src="@drawable/favorites_button_selected" />
+                android:src="@drawable/ic_tab_heart" />
 
             <FrameLayout
                 android:layout_width="wrap_content"
@@ -92,7 +92,7 @@
                 android:background="@android:color/transparent"
                 android:focusable="true"
                 android:padding="10dp"
-                android:src="@android:drawable/ic_menu_sort_by_size"
+                android:src="@drawable/ic_tab_filter"
                 android:contentDescription="@string/filter" />
 
             <ImageButton
@@ -102,7 +102,7 @@
                 android:background="@android:color/transparent"
                 android:focusable="true"
                 android:padding="10dp"
-                android:src="@drawable/search_button_selected" />
+                android:src="@drawable/ic_tab_search" />
 
             <ImageButton
                 android:id="@+id/btnAccount"
@@ -111,7 +111,7 @@
                 android:background="@android:color/transparent"
                 android:focusable="true"
                 android:padding="10dp"
-                android:src="@android:drawable/ic_menu_myplaces"
+                android:src="@drawable/ic_tab_person"
                 android:contentDescription="@string/account" />
 
         </LinearLayout>
@@ -147,6 +147,13 @@
                         android:indeterminateTint="@android:color/white"
                         android:visibility="visible"
                         tools:visibility="gone" />
+                    <LinearLayout
+                        android:id="@+id/llSlideDots"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom|center_horizontal"
+                        android:layout_marginBottom="10dp"
+                        android:orientation="horizontal" />
 
                 </FrameLayout>
 

@@ -1,16 +1,21 @@
 package com.a1hd.movies.ui.sections.movie.watch
 
 import com.a1hd.movies.BuildConfig
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.GestureDetector
+import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.media3.common.MediaItem
@@ -106,11 +111,17 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVid
 
     private var movieTitle: String? = null
 
-    // Views inside the custom controller layout (bottom bar)
-    private var btnPrevEpisode: Button? = null
-    private var btnNextEpisode: Button? = null
+    // Views inside the custom controller layout
+    private var btnPrevEpisode: ImageButton? = null
+    private var btnNextEpisode: ImageButton? = null
     private var btnSubtitles: Button? = null
     private var btnServer: Button? = null
+    private var btnSpeed: Button? = null
+    private var btnRewind: ImageButton? = null
+    private var btnForward: ImageButton? = null
+
+    private val playbackSpeeds = floatArrayOf(0.5f, 1.0f, 1.5f, 2.0f)
+    private var currentSpeed = 1.0f
 
     private var topBarVisible = false
 
@@ -140,7 +151,59 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVid
         setupEpisodeControls()
         setupSubtitleControls()
         setupServerControls()
+        setupSpeedControls()
+        setupDoubleTapSeek()
         syncTopBarWithController()
+    }
+
+    /** iOS-style double-tap: left 40% seeks −10s, right 40% seeks +10s; single tap toggles controls. */
+    @SuppressLint("ClickableViewAccessibility")
+    private fun setupDoubleTapSeek() {
+        val detector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onDoubleTap(e: MotionEvent): Boolean {
+                val width = binding.playerViewFullscreen.width.toFloat()
+                when {
+                    e.x < width * 0.4f -> { seekBy(-10_000); showSeekFeedback(false) }
+                    e.x > width * 0.6f -> { seekBy(10_000); showSeekFeedback(true) }
+                }
+                return true
+            }
+
+            override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+                val playerView = binding.playerViewFullscreen
+                if (playerView.isControllerFullyVisible) playerView.hideController() else playerView.showController()
+                return true
+            }
+        })
+        binding.playerViewFullscreen.setOnTouchListener { _, event ->
+            detector.onTouchEvent(event)
+            true
+        }
+    }
+
+    private fun seekBy(deltaMs: Long) {
+        if (!::simpleExoplayer.isInitialized) return
+        val duration = simpleExoplayer.duration
+        val max = if (duration > 0) duration else Long.MAX_VALUE
+        val target = (simpleExoplayer.currentPosition + deltaMs).coerceIn(0L, max)
+        simpleExoplayer.seekTo(target)
+    }
+
+    private val hideSeekFeedbackRunnable = Runnable { binding.tvSeekFeedback.visibility = View.GONE }
+
+    private fun showSeekFeedback(forward: Boolean) {
+        val feedback = binding.tvSeekFeedback
+        feedback.text = if (forward) "+10s" else "−10s"
+        val density = resources.displayMetrics.density
+        val edgeMargin = (48 * density).toInt()
+        val params = feedback.layoutParams as FrameLayout.LayoutParams
+        params.gravity = Gravity.CENTER_VERTICAL or (if (forward) Gravity.END else Gravity.START)
+        params.marginStart = if (forward) 0 else edgeMargin
+        params.marginEnd = if (forward) edgeMargin else 0
+        feedback.layoutParams = params
+        feedback.visibility = View.VISIBLE
+        subtitleHandler.removeCallbacks(hideSeekFeedbackRunnable)
+        subtitleHandler.postDelayed(hideSeekFeedbackRunnable, 600)
     }
 
     private fun findControllerViews() {
@@ -149,9 +212,15 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVid
         btnNextEpisode = playerView.findViewById(R.id.btnNextEpisode)
         btnSubtitles = playerView.findViewById(R.id.btnSubtitles)
         btnServer = playerView.findViewById(R.id.btnServer)
+        btnSpeed = playerView.findViewById(R.id.btnSpeed)
+        btnRewind = playerView.findViewById(R.id.btnRewind)
+        btnForward = playerView.findViewById(R.id.btnForward)
+        btnRewind?.setOnClickListener { seekBy(-10_000); showSeekFeedback(false) }
+        btnForward?.setOnClickListener { seekBy(10_000); showSeekFeedback(true) }
     }
 
     private fun setupTopBar() {
+        binding.btnClose.setOnClickListener { finish() }
         movieTitle?.let {
             binding.tvMovieTitle.text = it
         }
@@ -257,6 +326,27 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVid
         builder.show()
     }
 
+    private fun setupSpeedControls() {
+        btnSpeed?.text = getString(R.string.speed_label, formatSpeed(currentSpeed))
+        btnSpeed?.setOnClickListener { showSpeedPicker() }
+    }
+
+    private fun showSpeedPicker() {
+        val labels = playbackSpeeds.map { getString(R.string.speed_label, formatSpeed(it)) }.toTypedArray()
+        val builder = androidx.appcompat.app.AlertDialog.Builder(this, androidx.appcompat.R.style.Theme_AppCompat_Dialog_Alert)
+        builder.setTitle(getString(R.string.speed))
+        builder.setItems(labels) { _, which ->
+            currentSpeed = playbackSpeeds[which]
+            if (::simpleExoplayer.isInitialized) simpleExoplayer.setPlaybackSpeed(currentSpeed)
+            btnSpeed?.text = getString(R.string.speed_label, formatSpeed(currentSpeed))
+        }
+        builder.show()
+    }
+
+    private fun formatSpeed(speed: Float): String {
+        return if (speed == speed.toInt().toFloat()) "${speed.toInt()}x" else "${speed}x"
+    }
+
     private fun showSubtitlePicker() {
         val items = mutableListOf("Off")
         items.addAll(subtitleTracks.map { it.label.ifEmpty { it.language.ifEmpty { "Unknown" } } })
@@ -340,6 +430,8 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVid
         simpleExoplayer = ExoPlayer.Builder(this)
             .setTrackSelector(trackSelector)
             .setLoadControl(loadControl)
+            .setSeekBackIncrementMs(10_000)
+            .setSeekForwardIncrementMs(10_000)
             .build()
         preparePlayer(videoUrl)
     }
@@ -351,6 +443,7 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVid
         if (pendingResumeMs > 0) {
             simpleExoplayer.seekTo(pendingResumeMs)
         }
+        simpleExoplayer.setPlaybackSpeed(currentSpeed)
         simpleExoplayer.playWhenReady = true
         simpleExoplayer.addListener(this)
         binding.playerViewFullscreen.player = simpleExoplayer
@@ -462,6 +555,7 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVid
         super.onDestroy()
         subtitleHandler.removeCallbacks(subtitleUpdateRunnable)
         subtitleHandler.removeCallbacks(progressSaveRunnable)
+        subtitleHandler.removeCallbacks(hideSeekFeedbackRunnable)
         playerScope.cancel()
         releasePlayer()
     }

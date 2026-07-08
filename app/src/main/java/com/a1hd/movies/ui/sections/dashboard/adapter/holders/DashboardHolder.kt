@@ -12,6 +12,7 @@ class DashboardHolder(private val binding: ItemDashboardBinding) : RecyclerView.
     fun bind(movieData: MoviesDataModel, onStatisticsClickListener: (MoviesDataModel) -> Unit) {
         binding.tvName.text = movieData.name
         binding.tvQuality.text = movieData.quality
+        binding.tvQuality.isVisible = movieData.quality.isNotEmpty()
 
         binding.ivPoster.isVisible = movieData.thumbnail.isNotEmpty()
         if (movieData.thumbnail.isNotEmpty()) {

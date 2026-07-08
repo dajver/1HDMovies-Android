@@ -2,6 +2,8 @@ package com.a1hd.movies.ui.sections.dashboard
 
 import android.os.Bundle
 import android.view.View
+import android.widget.ImageView
+import android.widget.LinearLayout
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import com.a1hd.movies.R
@@ -118,6 +120,7 @@ class DashboardFragment: BaseFragment<FragmentDashboardBinding>(FragmentDashboar
         dashboardViewModel.fetchMostPopularLiveData.observe(viewLifecycleOwner) {
             binding.pbProgressMostPopular.isVisible = false
             viewPagerAdapter.setImages(it.toMutableList())
+            setupSlideDots(it.size)
             // New Releases row: same content as the slider, but cards open details.
             newReleasesRecyclerAdapter.setMovies(it.map { mp -> mp.toCard() }.toMutableList())
         }
@@ -271,6 +274,40 @@ class DashboardFragment: BaseFragment<FragmentDashboardBinding>(FragmentDashboar
                 }
             }
             .show()
+    }
+
+    /** iOS-style pagination dots under the hero slider. */
+    private fun setupSlideDots(count: Int) {
+        binding.llSlideDots.removeAllViews()
+        if (count <= 1) return
+        val density = resources.displayMetrics.density
+        val size = (8 * density).toInt()
+        val margin = (4 * density).toInt()
+        val dots = ArrayList<ImageView>()
+        for (i in 0 until count) {
+            val dot = ImageView(requireContext())
+            dot.layoutParams = LinearLayout.LayoutParams(size, size).apply {
+                marginStart = margin
+                marginEnd = margin
+            }
+            dot.setImageResource(
+                if (i == binding.viewPagerMain.currentItem) R.drawable.slide_dot_active
+                else R.drawable.slide_dot_inactive
+            )
+            binding.llSlideDots.addView(dot)
+            dots.add(dot)
+        }
+        binding.viewPagerMain.clearOnPageChangeListeners()
+        binding.viewPagerMain.addOnPageChangeListener(object : androidx.viewpager.widget.ViewPager.SimpleOnPageChangeListener() {
+            override fun onPageSelected(position: Int) {
+                dots.forEachIndexed { index, dot ->
+                    dot.setImageResource(
+                        if (index == position) R.drawable.slide_dot_active
+                        else R.drawable.slide_dot_inactive
+                    )
+                }
+            }
+        })
     }
 
     private val onMovieClickListener: (MoviesDataModel) -> Unit = {

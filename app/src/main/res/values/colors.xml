@@ -1,12 +1,17 @@
 <resources>
-    <color name="main_background_color">#121111</color>
+    <!-- iOS-aligned palette: pure black background, red accent (iOS system red), white text. -->
+    <color name="main_background_color">#000000</color>
     <color name="background_gradient_start">#000000</color>
     <color name="background_gradient_end">#DDDDDD</color>
     <color name="fastlane_background">#0096a6</color>
     <color name="fastlane_light_background">#02C2D7</color>
     <color name="fastlane_dark_background">#006671</color>
-    <color name="search_opaque">#926224</color>
-    <color name="selected_background">#ffaa3f</color>
-    <color name="default_background">#3d3d3d</color>
-    <color name="transparent_background">#90121111</color>
+    <!-- Focused accent (a slightly darker red for the focused/pressed state). -->
+    <color name="search_opaque">#D32F2F</color>
+    <!-- Primary red accent — highlights, selected states, badges. -->
+    <color name="selected_background">#FF3B30</color>
+    <color name="accent_red">#FF3B30</color>
+    <color name="accent_red_dark">#D32F2F</color>
+    <color name="default_background">#2C2C2E</color>
+    <color name="transparent_background">#90000000</color>
 </resources>

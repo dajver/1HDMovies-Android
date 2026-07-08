@@ -12,6 +12,7 @@ import com.a1hd.movies.api.repository.ParseJsonMovieDetailsRepository
 import com.a1hd.movies.api.repository.ParseJsonYouMayAlsoLikeRepository
 import com.a1hd.movies.db.repository.WatchedEpisodeRepository
 import com.a1hd.movies.db.repository.WatchedRepository
+import com.a1hd.movies.db.repository.WatchingShowRepository
 import com.a1hd.movies.ui.sections.favorite.repository.FavoriteRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -22,7 +23,8 @@ class MovieDetailsViewModel @Inject constructor(
     private val parseJsonYouMayAlsoLikeRepository: ParseJsonYouMayAlsoLikeRepository,
     private val favoriteRepository: FavoriteRepository,
     private val watchedRepository: WatchedRepository,
-    private val watchedEpisodeRepository: WatchedEpisodeRepository
+    private val watchedEpisodeRepository: WatchedEpisodeRepository,
+    private val watchingShowRepository: WatchingShowRepository
 ): ViewModel() {
 
     private val fetchDetailsMoviesMutableLiveData = MutableLiveData<MoviesDetailsDataModel>()
@@ -123,6 +125,11 @@ class MovieDetailsViewModel @Inject constructor(
     }
 
     fun getDetails(): MoviesDetailsDataModel? = moviesDetailsDataModel
+
+    /** Remember this show as "currently watching" so it shows up in Continue Watching. */
+    fun rememberWatchingShow() {
+        moviesDetailsDataModel?.let { watchingShowRepository.remember(it) }
+    }
 
     fun getSelectedSeason(): MovieSeasonDataModel? {
         return moviesDetailsDataModel?.seasonsList?.firstOrNull { it.isSelected }

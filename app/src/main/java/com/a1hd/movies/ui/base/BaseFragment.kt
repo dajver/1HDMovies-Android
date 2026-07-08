@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.viewbinding.ViewBinding
+import com.a1hd.movies.R
 import com.a1hd.movies.ui.navigation.NavigationRouter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
@@ -30,6 +31,14 @@ abstract class BaseFragment<VB: ViewBinding>(
     ): View? {
         _binding = inflate.invoke(inflater, container, false)
         return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        // Any screen that includes a @+id/btnBack gets a working back button for free.
+        view.findViewById<View?>(R.id.btnBack)?.setOnClickListener {
+            navigationRouter.navigateBack()
+        }
     }
 
     override fun onDestroyView() {

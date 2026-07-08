@@ -30,6 +30,10 @@ class SeasonsRecyclerAdapter @Inject constructor(): RecyclerView.Adapter<Recycle
         val model = seasonsList[position]
         viewHolder.bind(model)
 
+        // Red pill for the selected season (touch); on TV, focus overrides this so the
+        // focused item is red and the playing season stays bold.
+        holder.itemView.isSelected = model.isSelected
+
         viewHolder.itemView.setOnFocusChangeListener { v, hasFocus ->
             v.isSelected = hasFocus
             viewHolder.select(hasFocus, model)

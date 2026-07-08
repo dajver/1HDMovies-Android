@@ -19,7 +19,8 @@ class ParseJsonMovieDetailsRepository @Inject constructor(
         val type = if (linkToMovieDetails.contains("movie")) MovieType.MOVIE else MovieType.TV_SHOW
         val movieDetails = doc.select("div.detail-elements")
         val thumbnail = movieDetails.select("img.film-thumbnail-img").attr("src")
-        val title = movieDetails.select("h3.heading-xl").text()
+        // The site moved the title tag (h3 → h2); select by class only to be resilient.
+        val title = movieDetails.select(".heading-xl").text()
         val quality = movieDetails.select("div.quality").text()
         val linkToWatch = movieDetails.select("div.div-buttons").select("a").attr("href")
         val description = movieDetails.select("div.description").text()
