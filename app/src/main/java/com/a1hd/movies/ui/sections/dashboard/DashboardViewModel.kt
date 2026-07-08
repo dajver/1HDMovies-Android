@@ -12,6 +12,8 @@ import com.a1hd.movies.api.repository.ParseJsonMostPopularRepository
 import com.a1hd.movies.api.repository.ParseJsonMoviesGenresRepository
 import com.a1hd.movies.api.repository.ParseJsonMoviesRepository
 import com.a1hd.movies.api.repository.ParseJsonTvShowsRepository
+import com.a1hd.movies.db.repository.ContinueWatchingItem
+import com.a1hd.movies.db.repository.ContinueWatchingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -21,8 +23,12 @@ class DashboardViewModel @Inject constructor(
     private val parseJsonMoviesRepository: ParseJsonMoviesRepository,
     private val parseJsonTvShowsRepository: ParseJsonTvShowsRepository,
     private val parseJsonMostPopularRepository: ParseJsonMostPopularRepository,
-    private val parseJsonMoviesGenresRepository: ParseJsonMoviesGenresRepository
+    private val parseJsonMoviesGenresRepository: ParseJsonMoviesGenresRepository,
+    private val continueWatchingRepository: ContinueWatchingRepository
 ): ViewModel() {
+
+    private val fetchContinueWatchingMutableLiveData = MutableLiveData<List<ContinueWatchingItem>>()
+    val fetchContinueWatchingLiveData: LiveData<List<ContinueWatchingItem>> = fetchContinueWatchingMutableLiveData
 
     private val fetchMostPopularMutableLiveData = MutableLiveData<List<MostPopularMoviesDataModel>>()
     val fetchMostPopularLiveData: LiveData<List<MostPopularMoviesDataModel>> = fetchMostPopularMutableLiveData
@@ -68,6 +74,15 @@ class DashboardViewModel @Inject constructor(
     private var allHorrorMoviesList = emptyList<MoviesDataModel>()
     private var allMysteryMoviesList = emptyList<MoviesDataModel>()
     private var allTopIMDBMoviesList = emptyList<MoviesDataModel>()
+
+    fun fetchContinueWatching() = launch {
+        fetchContinueWatchingMutableLiveData.postValue(continueWatchingRepository.build())
+    }
+
+    fun removeFromContinueWatching(item: ContinueWatchingItem) = launch {
+        continueWatchingRepository.remove(item)
+        fetchContinueWatchingMutableLiveData.postValue(continueWatchingRepository.build())
+    }
 
     fun fetchMostPopular() = launch {
         if (mostPopularMovies.isEmpty()) {

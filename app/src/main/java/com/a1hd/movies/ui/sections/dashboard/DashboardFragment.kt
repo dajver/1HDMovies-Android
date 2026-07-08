@@ -11,6 +11,8 @@ import com.a1hd.movies.databinding.FragmentDashboardBinding
 import com.a1hd.movies.ui.navigation.route.Router
 import com.a1hd.movies.api.repository.MovieType
 import com.a1hd.movies.api.repository.MoviesDataModel
+import com.a1hd.movies.db.repository.ContinueWatchingItem
+import com.a1hd.movies.ui.sections.dashboard.adapter.ContinueWatchingRecyclerAdapter
 import com.a1hd.movies.ui.sections.dashboard.adapter.DashboardRecyclerAdapter
 import com.a1hd.movies.ui.sections.dashboard.viewpager.ViewPagerAdapter
 import dagger.hilt.android.AndroidEntryPoint
@@ -20,6 +22,9 @@ private const val NONE_LINK_TO_DETAILS = "NONE"
 
 @AndroidEntryPoint
 class DashboardFragment: BaseFragment<FragmentDashboardBinding>(FragmentDashboardBinding::inflate) {
+
+    @Inject
+    lateinit var continueWatchingRecyclerAdapter: ContinueWatchingRecyclerAdapter
 
     @Inject
     lateinit var topMoviesRecyclerAdapter: DashboardRecyclerAdapter
@@ -76,6 +81,9 @@ class DashboardFragment: BaseFragment<FragmentDashboardBinding>(FragmentDashboar
         viewPagerAdapter.onMostPopularMovieClickListener = {
             navigationRouter.navigateTo(Router.WatchMovie(it.link))
         }
+        continueWatchingRecyclerAdapter.onItemClickListener = { item -> openContinueWatching(item) }
+        continueWatchingRecyclerAdapter.onItemLongClickListener = { item -> showContinueWatchingMenu(item) }
+        binding.rvContinueWatching.adapter = continueWatchingRecyclerAdapter
         binding.rvTopMovies.adapter = topMoviesRecyclerAdapter
         binding.rvTopTvShows.adapter = topTvShowsRecyclerAdapter
         binding.rvMovies.adapter = moviesRecyclerAdapter
@@ -88,6 +96,13 @@ class DashboardFragment: BaseFragment<FragmentDashboardBinding>(FragmentDashboar
         binding.rvMystery.adapter = mysteryMoviesRecyclerAdapter
         binding.rvTopIMDB.adapter = topImdbMoviesRecyclerAdapter
         binding.viewPagerMain.adapter = viewPagerAdapter
+
+        dashboardViewModel.fetchContinueWatching()
+        dashboardViewModel.fetchContinueWatchingLiveData.observe(viewLifecycleOwner) { items ->
+            continueWatchingRecyclerAdapter.setItems(items.toMutableList())
+            binding.tvContinueWatching.isVisible = items.isNotEmpty()
+            binding.rvContinueWatching.isVisible = items.isNotEmpty()
+        }
 
         dashboardViewModel.fetchMostPopular()
         dashboardViewModel.fetchMostPopularLiveData.observe(viewLifecycleOwner) {
@@ -176,6 +191,41 @@ class DashboardFragment: BaseFragment<FragmentDashboardBinding>(FragmentDashboar
         }
 
         setupListeners()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Refresh Continue Watching when returning from the player.
+        if (view != null) dashboardViewModel.fetchContinueWatching()
+    }
+
+    private fun openContinueWatching(item: ContinueWatchingItem) {
+        navigationRouter.navigateTo(
+            Router.WatchMovie(
+                movieUrl = item.watchUrl,
+                title = item.title,
+                episodes = item.episodes,
+                episodeIndex = item.episodeIndex,
+                showLink = item.showLink,
+                thumbnail = item.thumbnail,
+                contentType = item.contentType,
+                seasonNumber = item.seasonNumber
+            )
+        )
+    }
+
+    private fun showContinueWatchingMenu(item: ContinueWatchingItem) {
+        val open = getString(R.string.open_details)
+        val remove = getString(R.string.remove_from_continue_watching)
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle(item.title)
+            .setItems(arrayOf(open, remove)) { _, which ->
+                when (which) {
+                    0 -> navigationRouter.navigateTo(Router.MovieDetails(item.id))
+                    1 -> dashboardViewModel.removeFromContinueWatching(item)
+                }
+            }
+            .show()
     }
 
     private val onMovieClickListener: (MoviesDataModel) -> Unit = {
