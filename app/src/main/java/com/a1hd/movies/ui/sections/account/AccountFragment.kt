@@ -1,12 +1,13 @@
 package com.a1hd.movies.ui.sections.account
 
-import android.app.Activity
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.a1hd.movies.R
+import com.google.android.gms.common.api.ApiException
 import com.a1hd.movies.databinding.FragmentAccountBinding
 import com.a1hd.movies.services.AuthenticationService
 import com.a1hd.movies.services.FirebaseSyncService
@@ -28,18 +29,27 @@ class AccountFragment : BaseFragment<FragmentAccountBinding>(FragmentAccountBind
     lateinit var syncService: FirebaseSyncService
 
     private val signInLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            lifecycleScope.launch {
-                try {
-                    authService.handleSignInResult(result.data)
+        // Process the returned data regardless of result code; surface any failure.
+        lifecycleScope.launch {
+            try {
+                val user = authService.handleSignInResult(result.data)
+                if (user != null) {
                     updateUI()
                     syncService.syncAll()
                     updateUI()
-                } catch (e: Exception) {
-                    e.printStackTrace()
+                } else {
+                    toast(getString(R.string.sign_in_failed))
                 }
+            } catch (e: ApiException) {
+                toast(getString(R.string.sign_in_error_code, e.statusCode))
+            } catch (e: Exception) {
+                toast(getString(R.string.sign_in_error, e.message ?: "unknown"))
             }
         }
+    }
+
+    private fun toast(message: String) {
+        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

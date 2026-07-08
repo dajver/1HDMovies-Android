@@ -55,6 +55,9 @@
     <string name="signed_in_as">Signed in as %s</string>
     <string name="last_sync">Last sync: %s</string>
     <string name="sync_now">Sync Now</string>
+    <string name="sign_in_failed">Sign-in failed: no ID token received</string>
+    <string name="sign_in_error_code">Sign-in error (code %1$d). Check the app SHA-1 is registered in Firebase.</string>
+    <string name="sign_in_error">Sign-in error: %1$s</string>
     <string name="syncing">Syncing…</string>
     <string name="sign_in_description">Sign in to keep your favorites safe and synced across all your devices</string>
     <string name="sign_in_benefit_sync">Your favorites are automatically synced to the cloud so you never lose them</string>
