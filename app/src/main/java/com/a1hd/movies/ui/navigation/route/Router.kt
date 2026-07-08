@@ -13,6 +13,7 @@ import com.a1hd.movies.ui.sections.favorite.FavoriteFragment
 import com.a1hd.movies.ui.sections.genre.MovieByGenreFragment
 import com.a1hd.movies.ui.sections.movie.MovieDetailsFragment
 import com.a1hd.movies.ui.sections.movie.watch.WatchMovieFragment
+import com.a1hd.movies.ui.sections.notifications.NotificationsFragment
 import com.a1hd.movies.ui.sections.search.SearchFragment
 import com.a1hd.movies.ui.sections.watched.WatchedFragment
 
@@ -36,6 +37,7 @@ sealed class Router(val clearStack: Boolean = false) {
     object Search : Router()
     object Favorites : Router()
     object Watched : Router()
+    object Notifications : Router()
     object Account : Router()
     object Filter : Router()
 }
@@ -52,6 +54,7 @@ fun Router.toFragment(): Fragment {
         Router.Search -> SearchFragment()
         Router.Favorites -> FavoriteFragment()
         Router.Watched -> WatchedFragment()
+        Router.Notifications -> NotificationsFragment()
         Router.Account -> AccountFragment()
         Router.Filter -> FilterFragment()
     }
@@ -69,6 +72,7 @@ fun Fragment.toRouter(): Router {
         is SearchFragment -> Router.Search
         is FavoriteFragment -> Router.Favorites
         is WatchedFragment -> Router.Watched
+        is NotificationsFragment -> Router.Notifications
         is AccountFragment -> Router.Account
         is FilterFragment -> Router.Filter
         else -> throw RuntimeException("Not found such fragment in router $this")

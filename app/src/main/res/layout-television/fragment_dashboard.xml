@@ -69,6 +69,35 @@
                 android:padding="10dp"
                 android:src="@drawable/favorites_button_selected" />
 
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <ImageButton
+                    android:id="@+id/btnNotifications"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="@string/notifications"
+                    android:focusable="true"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_bell" />
+
+                <TextView
+                    android:id="@+id/tvNotificationBadge"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="top|end"
+                    android:background="@drawable/notification_badge_background"
+                    android:gravity="center"
+                    android:textColor="@android:color/white"
+                    android:textSize="10sp"
+                    android:visibility="gone"
+                    tools:text="3"
+                    tools:visibility="visible" />
+
+            </FrameLayout>
+
             <ImageButton
                 android:id="@+id/btnAccount"
                 android:layout_width="wrap_content"
@@ -137,6 +166,25 @@
                     app:layoutManager=".ui.sections.dashboard.manager.TVLinearLayoutManager"
                     tools:listitem="@layout/item_continue_watching"
                     tools:visibility="visible" />
+
+                <TextView
+                    android:id="@+id/tvNewReleases"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="15dp"
+                    android:text="@string/new_releases"
+                    android:textColor="@android:color/white"
+                    android:textSize="24sp" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvNewReleases"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    app:layoutManager=".ui.sections.dashboard.manager.TVLinearLayoutManager"
+                    tools:listitem="@layout/item_dashboard" />
 
                 <TextView
                     android:id="@+id/tvTopMovies"
@@ -314,6 +362,24 @@
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvMystery"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    app:layoutManager=".ui.sections.dashboard.manager.TVLinearLayoutManager"
+                    tools:listitem="@layout/item_dashboard" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:paddingStart="15dp"
+                    android:paddingEnd="15dp"
+                    android:text="@string/animation"
+                    android:textColor="@android:color/white"
+                    android:textSize="24sp" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvAnimation"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"

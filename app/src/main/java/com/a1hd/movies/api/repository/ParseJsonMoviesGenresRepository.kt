@@ -54,6 +54,7 @@ enum class GenresEnum(val path: String) {
     FANTASY("/genre/fantasy"),
     HORROR("/genre/horror"),
     MYSTERY("/genre/mystery"),
+    ANIMATION("/genre/animation"),
     TOP_IMDB("/top-imdb");
 
     val url: String get() = "${BuildConfig.BASE_URL}$path"

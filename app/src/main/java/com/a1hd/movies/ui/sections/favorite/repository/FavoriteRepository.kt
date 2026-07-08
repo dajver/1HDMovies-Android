@@ -47,6 +47,18 @@ class FavoriteRepository @Inject constructor(prefs: SharedPreferences, gson: Gso
         favorites = favoritesList
     }
 
+    /** Replaces a stored favorite (e.g. to refresh its seasons/episodes), preserving addedAt. */
+    fun update(movie: MoviesDetailsDataModel) {
+        val list = mutableListOf<MoviesDetailsDataModel>()
+        list.addAll(favorites)
+        val index = list.indexOfFirst { it.linkToDetails == movie.linkToDetails }
+        if (index >= 0) {
+            movie.addedAt = list[index].addedAt ?: movie.addedAt
+            list[index] = movie
+            favorites = list
+        }
+    }
+
     private fun save(movie: MoviesDetailsDataModel) {
         val favoritesList = mutableListOf<MoviesDetailsDataModel>()
         favoritesList.addAll(favorites)

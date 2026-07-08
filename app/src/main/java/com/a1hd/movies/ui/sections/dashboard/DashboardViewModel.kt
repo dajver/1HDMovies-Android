@@ -14,6 +14,7 @@ import com.a1hd.movies.api.repository.ParseJsonMoviesRepository
 import com.a1hd.movies.api.repository.ParseJsonTvShowsRepository
 import com.a1hd.movies.db.repository.ContinueWatchingItem
 import com.a1hd.movies.db.repository.ContinueWatchingRepository
+import com.a1hd.movies.db.repository.NotificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -24,11 +25,19 @@ class DashboardViewModel @Inject constructor(
     private val parseJsonTvShowsRepository: ParseJsonTvShowsRepository,
     private val parseJsonMostPopularRepository: ParseJsonMostPopularRepository,
     private val parseJsonMoviesGenresRepository: ParseJsonMoviesGenresRepository,
-    private val continueWatchingRepository: ContinueWatchingRepository
+    private val continueWatchingRepository: ContinueWatchingRepository,
+    private val notificationRepository: NotificationRepository
 ): ViewModel() {
 
     private val fetchContinueWatchingMutableLiveData = MutableLiveData<List<ContinueWatchingItem>>()
     val fetchContinueWatchingLiveData: LiveData<List<ContinueWatchingItem>> = fetchContinueWatchingMutableLiveData
+
+    private val unreadCountMutableLiveData = MutableLiveData<Int>()
+    val unreadCountLiveData: LiveData<Int> = unreadCountMutableLiveData
+
+    private val fetchAnimationMoviesMutableLiveData = MutableLiveData<List<MoviesDataModel>>()
+    val fetchAnimationMoviesLiveData: LiveData<List<MoviesDataModel>> = fetchAnimationMoviesMutableLiveData
+    private var allAnimationMoviesList = emptyList<MoviesDataModel>()
 
     private val fetchMostPopularMutableLiveData = MutableLiveData<List<MostPopularMoviesDataModel>>()
     val fetchMostPopularLiveData: LiveData<List<MostPopularMoviesDataModel>> = fetchMostPopularMutableLiveData
@@ -77,6 +86,17 @@ class DashboardViewModel @Inject constructor(
 
     fun fetchContinueWatching() = launch {
         fetchContinueWatchingMutableLiveData.postValue(continueWatchingRepository.build())
+    }
+
+    fun fetchUnreadNotifications() = launch {
+        unreadCountMutableLiveData.postValue(notificationRepository.unreadCount())
+    }
+
+    fun fetchAnimationMovies() = launch {
+        if (allAnimationMoviesList.isEmpty()) {
+            allAnimationMoviesList = parseJsonMoviesGenresRepository.fetchMoviesByGenre(genre = GenresEnum.ANIMATION, page = 1)
+        }
+        fetchAnimationMoviesMutableLiveData.postValue(allAnimationMoviesList)
     }
 
     fun removeFromContinueWatching(item: ContinueWatchingItem) = launch {

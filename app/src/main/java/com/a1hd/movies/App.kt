@@ -3,6 +3,7 @@ package com.a1hd.movies
 import android.app.Application
 import com.a1hd.movies.services.AuthenticationService
 import com.a1hd.movies.services.FirebaseSyncService
+import com.a1hd.movies.services.NewEpisodeService
 import com.a1hd.movies.ui.sections.favorite.repository.FavoriteRepository
 import com.google.firebase.FirebaseApp
 import dagger.hilt.android.HiltAndroidApp
@@ -25,6 +26,9 @@ class App : Application() {
     @Inject
     lateinit var favoriteRepository: FavoriteRepository
 
+    @Inject
+    lateinit var newEpisodeService: NewEpisodeService
+
     override fun onCreate() {
         super.onCreate()
         Security.insertProviderAt(Conscrypt.newProvider(), 1)
@@ -32,11 +36,12 @@ class App : Application() {
 
         setupFavoriteSyncHooks()
 
-        // Sync on startup if signed in
-        if (authService.isSignedIn) {
-            CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(Dispatchers.IO).launch {
+            // Sync on startup if signed in, then check favorited shows for new episodes (6h throttle).
+            if (authService.isSignedIn) {
                 syncService.syncAll()
             }
+            newEpisodeService.checkForNewEpisodes()
         }
     }
 

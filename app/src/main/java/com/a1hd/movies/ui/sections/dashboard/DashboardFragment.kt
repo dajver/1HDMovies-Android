@@ -27,6 +27,12 @@ class DashboardFragment: BaseFragment<FragmentDashboardBinding>(FragmentDashboar
     lateinit var continueWatchingRecyclerAdapter: ContinueWatchingRecyclerAdapter
 
     @Inject
+    lateinit var newReleasesRecyclerAdapter: DashboardRecyclerAdapter
+
+    @Inject
+    lateinit var animationMoviesRecyclerAdapter: DashboardRecyclerAdapter
+
+    @Inject
     lateinit var topMoviesRecyclerAdapter: DashboardRecyclerAdapter
 
     @Inject
@@ -83,7 +89,11 @@ class DashboardFragment: BaseFragment<FragmentDashboardBinding>(FragmentDashboar
         }
         continueWatchingRecyclerAdapter.onItemClickListener = { item -> openContinueWatching(item) }
         continueWatchingRecyclerAdapter.onItemLongClickListener = { item -> showContinueWatchingMenu(item) }
+        newReleasesRecyclerAdapter.onMovieClickListener = onMovieClickListener
+        animationMoviesRecyclerAdapter.onMovieClickListener = onMovieClickListener
         binding.rvContinueWatching.adapter = continueWatchingRecyclerAdapter
+        binding.rvNewReleases.adapter = newReleasesRecyclerAdapter
+        binding.rvAnimation.adapter = animationMoviesRecyclerAdapter
         binding.rvTopMovies.adapter = topMoviesRecyclerAdapter
         binding.rvTopTvShows.adapter = topTvShowsRecyclerAdapter
         binding.rvMovies.adapter = moviesRecyclerAdapter
@@ -108,6 +118,24 @@ class DashboardFragment: BaseFragment<FragmentDashboardBinding>(FragmentDashboar
         dashboardViewModel.fetchMostPopularLiveData.observe(viewLifecycleOwner) {
             binding.pbProgressMostPopular.isVisible = false
             viewPagerAdapter.setImages(it.toMutableList())
+            // New Releases row: same content as the slider, but cards open details.
+            newReleasesRecyclerAdapter.setMovies(it.map { mp -> mp.toCard() }.toMutableList())
+        }
+
+        binding.btnNotifications.setOnClickListener {
+            navigationRouter.navigateTo(Router.Notifications)
+        }
+        dashboardViewModel.unreadCountLiveData.observe(viewLifecycleOwner) { count ->
+            binding.tvNotificationBadge.isVisible = count > 0
+            binding.tvNotificationBadge.text = if (count > 99) "99+" else count.toString()
+        }
+        dashboardViewModel.fetchUnreadNotifications()
+
+        dashboardViewModel.fetchAnimationMovies()
+        dashboardViewModel.fetchAnimationMoviesLiveData.observe(viewLifecycleOwner) {
+            val animationMovies = it.toMutableList()
+            animationMovies.add(animationMovies.size, genreMoviesPlaceHolder(getString(R.string.animation), GenresEnum.ANIMATION))
+            animationMoviesRecyclerAdapter.setMovies(animationMovies)
         }
 
         dashboardViewModel.fetchDashboard()
@@ -195,8 +223,25 @@ class DashboardFragment: BaseFragment<FragmentDashboardBinding>(FragmentDashboar
 
     override fun onResume() {
         super.onResume()
-        // Refresh Continue Watching when returning from the player.
-        if (view != null) dashboardViewModel.fetchContinueWatching()
+        // Refresh Continue Watching + unread badge when returning from other screens.
+        if (view != null) {
+            dashboardViewModel.fetchContinueWatching()
+            dashboardViewModel.fetchUnreadNotifications()
+        }
+    }
+
+    private fun com.a1hd.movies.api.repository.MostPopularMoviesDataModel.toCard(): MoviesDataModel {
+        val parts = quality.split(",").map { it.trim() }
+        val typeStr = parts.getOrElse(1) { "" }
+        val type = if (typeStr.equals("Movie", ignoreCase = true)) MovieType.MOVIE else MovieType.TV_SHOW
+        return MoviesDataModel(
+            name,
+            thumbnail,
+            link,
+            type,
+            parts.getOrElse(0) { "" },
+            parts.getOrElse(2) { "" }
+        )
     }
 
     private fun openContinueWatching(item: ContinueWatchingItem) {
