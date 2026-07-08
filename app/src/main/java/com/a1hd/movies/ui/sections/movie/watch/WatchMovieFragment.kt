@@ -81,6 +81,7 @@ class WatchMovieFragment: BaseFragment<FragmentWatchMovieBinding>(FragmentWatchM
                 url = it.first(),
                 referer = referer,
                 title = movieTitle,
+                contentLink = movieUrl,
                 subtitles = ArrayList(subtitles),
                 episodes = episodes,
                 currentEpisodeIndex = currentEpisodeIndex,

@@ -29,6 +29,7 @@ import androidx.media3.exoplayer.upstream.DefaultAllocator
 import com.a1hd.movies.R
 import com.a1hd.movies.api.repository.MovieEpisodesDataModel
 import com.a1hd.movies.databinding.ActivityVideoPlayerBinding
+import com.a1hd.movies.db.repository.PlaybackProgressRepository
 import com.a1hd.movies.ui.base.BaseActivity
 import com.a1hd.movies.ui.views.SubtitleCue
 import com.a1hd.movies.ui.views.SubtitleTrack
@@ -36,10 +37,13 @@ import com.a1hd.movies.ui.views.VTTParser
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import javax.inject.Inject
 
 private const val MIN_BUFFER_DURATION = 2000
 private const val MAX_BUFFER_DURATION = 5000
@@ -50,9 +54,26 @@ private const val MIN_PLAYBACK_RESUME_BUFFER = 2000
 @AndroidEntryPoint
 class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVideoPlayerBinding::inflate), Player.Listener {
 
+    @Inject
+    lateinit var playbackProgressRepository: PlaybackProgressRepository
+
     private lateinit var simpleExoplayer: ExoPlayer
     private lateinit var videoUrl: String
     private var referer: String = "${BuildConfig.BASE_URL}/"
+
+    /** Stable key for resume (episode link / movie watch URL) — never the per-session .m3u8. */
+    private var contentLink: String = ""
+    private var contentThumbnail: String? = null
+    private var contentType: String? = null
+    private var pendingResumeMs: Long = 0L
+    private val playerScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+
+    private val progressSaveRunnable = object : Runnable {
+        override fun run() {
+            saveProgress()
+            subtitleHandler.postDelayed(this, PROGRESS_SAVE_INTERVAL_MS)
+        }
+    }
 
     private var subtitleTracks: ArrayList<SubtitleTrack> = arrayListOf()
     private var episodes: ArrayList<MovieEpisodesDataModel>? = null
@@ -97,6 +118,9 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVid
         serverUrls = bundle?.getStringArrayList(EXTRA_SERVER_URLS)
         currentServerIndex = bundle?.getInt(EXTRA_SERVER_INDEX, 0) ?: 0
         movieTitle = bundle?.getString(EXTRA_TITLE)
+        contentLink = bundle?.getString(EXTRA_CONTENT_LINK) ?: ""
+        contentThumbnail = bundle?.getString(EXTRA_THUMBNAIL)
+        contentType = bundle?.getString(EXTRA_CONTENT_TYPE)
 
         fullScreen()
         findControllerViews()
@@ -312,6 +336,9 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVid
         val uri = Uri.parse(videoUrl)
         val mediaSource = buildMediaSource(uri)
         simpleExoplayer.setMediaSource(mediaSource, false)
+        if (pendingResumeMs > 0) {
+            simpleExoplayer.seekTo(pendingResumeMs)
+        }
         simpleExoplayer.playWhenReady = true
         simpleExoplayer.addListener(this)
         binding.playerViewFullscreen.player = simpleExoplayer
@@ -341,6 +368,23 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVid
         }
     }
 
+    /** Reads the current position/duration on the main thread and persists it. */
+    private fun saveProgress() {
+        if (contentLink.isBlank() || !::simpleExoplayer.isInitialized) return
+        val positionMs = simpleExoplayer.currentPosition
+        val durationRaw = simpleExoplayer.duration
+        val durationMs = if (durationRaw > 0) durationRaw else 0L
+        if (positionMs <= 0) return
+        val isMovie = (episodes?.size ?: 0) <= 1
+        val title = if (isMovie) movieTitle else null
+        val thumbnail = if (isMovie) contentThumbnail else null
+        val type = if (isMovie) contentType else null
+        // Fire-and-forget on an app-scoped context so it survives the activity finishing.
+        CoroutineScope(Dispatchers.IO).launch {
+            playbackProgressRepository.save(contentLink, positionMs, durationMs, title, thumbnail, type)
+        }
+    }
+
     @Deprecated("Deprecated in Java")
     override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
         if (playbackState == Player.STATE_BUFFERING)
@@ -366,19 +410,32 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVid
 
     override fun onStart() {
         super.onStart()
-        initializePlayer()
-        subtitleHandler.post(subtitleUpdateRunnable)
+        // Resolve the saved resume position (if any) before preparing the player.
+        playerScope.launch {
+            pendingResumeMs = try {
+                playbackProgressRepository.resumePosition(contentLink) ?: 0L
+            } catch (e: Exception) {
+                0L
+            }
+            initializePlayer()
+            subtitleHandler.post(subtitleUpdateRunnable)
+            subtitleHandler.postDelayed(progressSaveRunnable, PROGRESS_SAVE_INTERVAL_MS)
+        }
     }
 
     override fun onStop() {
         super.onStop()
         subtitleHandler.removeCallbacks(subtitleUpdateRunnable)
+        subtitleHandler.removeCallbacks(progressSaveRunnable)
+        saveProgress()
         releasePlayer()
     }
 
     override fun onDestroy() {
         super.onDestroy()
         subtitleHandler.removeCallbacks(subtitleUpdateRunnable)
+        subtitleHandler.removeCallbacks(progressSaveRunnable)
+        playerScope.cancel()
         releasePlayer()
     }
 
@@ -386,8 +443,13 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVid
 
         const val RESULT_EPISODE_INDEX = "RESULT_EPISODE_INDEX"
 
+        private const val PROGRESS_SAVE_INTERVAL_MS = 10_000L
+
         private const val EXTRA_TITLE = "EXTRA_TITLE"
         private const val EXTRA_LINK = "EXTRA_LINK"
+        private const val EXTRA_CONTENT_LINK = "EXTRA_CONTENT_LINK"
+        private const val EXTRA_THUMBNAIL = "EXTRA_THUMBNAIL"
+        private const val EXTRA_CONTENT_TYPE = "EXTRA_CONTENT_TYPE"
         private const val EXTRA_REFERER = "EXTRA_REFERER"
         private const val EXTRA_SUBTITLES = "EXTRA_SUBTITLES"
         private const val EXTRA_EPISODES = "EXTRA_EPISODES"
@@ -401,6 +463,9 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVid
             url: String,
             referer: String = "${BuildConfig.BASE_URL}/",
             title: String? = null,
+            contentLink: String? = null,
+            thumbnail: String? = null,
+            contentType: String? = null,
             subtitles: ArrayList<SubtitleTrack> = arrayListOf(),
             episodes: ArrayList<MovieEpisodesDataModel>? = null,
             currentEpisodeIndex: Int = 0,
@@ -411,6 +476,9 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVid
             val intent = Intent(context, VideoPlayerActivity::class.java)
             intent.putExtra(EXTRA_LINK, url)
             title?.let { intent.putExtra(EXTRA_TITLE, it) }
+            contentLink?.let { intent.putExtra(EXTRA_CONTENT_LINK, it) }
+            thumbnail?.let { intent.putExtra(EXTRA_THUMBNAIL, it) }
+            contentType?.let { intent.putExtra(EXTRA_CONTENT_TYPE, it) }
             intent.putExtra(EXTRA_REFERER, referer)
             intent.putExtra(EXTRA_SUBTITLES, subtitles)
             episodes?.let { intent.putExtra(EXTRA_EPISODES, it) }
