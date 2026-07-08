@@ -22,12 +22,24 @@ class WatchingShowRepository @Inject constructor(prefs: SharedPreferences, gson:
 
     private var shows: MutableList<MoviesDetailsDataModel> by prefs.mutableList(WATCHING_SHOWS, gson, "")
 
+    var onShowRemembered: ((MoviesDetailsDataModel) -> Unit)? = null
+
     /** Records (or refreshes) a show as "currently watching". No-op for movies / empty season lists. */
     fun remember(show: MoviesDetailsDataModel) {
         if (show.type != MovieType.TV_SHOW) return
         if (show.seasonsList.isNullOrEmpty()) return
         val list = shows.filterNot { it.linkToDetails == show.linkToDetails }.toMutableList()
-        show.addedAt = Date().time
+        if (show.addedAt == null) show.addedAt = Date().time
+        list.add(0, show)
+        shows = list.take(MAX_WATCHING_SHOWS).toMutableList()
+        onShowRemembered?.invoke(show)
+    }
+
+    /** Adds a show downloaded from the cloud without re-firing the upload hook. */
+    fun addFromCloud(show: MoviesDetailsDataModel) {
+        if (show.type != MovieType.TV_SHOW || show.seasonsList.isNullOrEmpty()) return
+        if (shows.any { it.linkToDetails == show.linkToDetails }) return
+        val list = shows.toMutableList()
         list.add(0, show)
         shows = list.take(MAX_WATCHING_SHOWS).toMutableList()
     }

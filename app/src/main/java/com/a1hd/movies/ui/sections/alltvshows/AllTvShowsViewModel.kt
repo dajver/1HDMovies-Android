@@ -34,12 +34,12 @@ class AllTvShowsViewModel @Inject constructor(
     }
 
     fun fetchPaginationTvShows() = launch {
-        if (isFiltering) {
-            val filtered = parseJsonFilterRepository.fetchFiltered(filterOptions, currentPage)
-            allTvShowsList = filtered
+        val newItems = if (isFiltering) {
+            parseJsonFilterRepository.fetchFiltered(filterOptions, currentPage)
         } else {
-            allTvShowsList = parseJsonTvShowsRepository.fetchTvShows(page = currentPage)
+            parseJsonTvShowsRepository.fetchTvShows(page = currentPage)
         }
+        allTvShowsList = (allTvShowsList + newItems).distinctBy { it.link }
         fetchTvShowsMutableLiveData.postValue(allTvShowsList)
     }
 

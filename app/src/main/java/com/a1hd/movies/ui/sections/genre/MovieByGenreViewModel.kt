@@ -29,7 +29,8 @@ class MovieByGenreViewModel @Inject constructor(
     }
 
     fun fetchPaginationMoviesByUrl(url: String) = launch {
-        moviesGenreList = parseJsonMoviesGenresRepository.fetchMoviesByUrl(url, page = currentPage)
+        val newItems = parseJsonMoviesGenresRepository.fetchMoviesByUrl(url, page = currentPage)
+        moviesGenreList = (moviesGenreList + newItems).distinctBy { it.link }
         fetchMoviesGenreMutableLiveData.postValue(moviesGenreList)
     }
 }

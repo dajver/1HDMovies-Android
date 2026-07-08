@@ -34,12 +34,13 @@ class AllMoviesViewModel @Inject constructor(
     }
 
     fun fetchPaginationMovies() = launch {
-        if (isFiltering) {
-            val filtered = parseJsonFilterRepository.fetchFiltered(filterOptions, currentPage)
-            allMoviesList = filtered
+        val newItems = if (isFiltering) {
+            parseJsonFilterRepository.fetchFiltered(filterOptions, currentPage)
         } else {
-            allMoviesList = parseJsonMoviesRepository.fetchMovies(page = currentPage)
+            parseJsonMoviesRepository.fetchMovies(page = currentPage)
         }
+        // Append the new page to the existing list (dedupe by link to guard against double loads).
+        allMoviesList = (allMoviesList + newItems).distinctBy { it.link }
         fetchMoviesMutableLiveData.postValue(allMoviesList)
     }
 

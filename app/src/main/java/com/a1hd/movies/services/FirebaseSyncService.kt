@@ -1,7 +1,6 @@
 package com.a1hd.movies.services
 
 import android.content.SharedPreferences
-import android.util.Base64
 import android.util.Log
 import com.a1hd.movies.api.repository.MovieEpisodesDataModel
 import com.a1hd.movies.api.repository.MovieSeasonDataModel
@@ -26,6 +25,17 @@ import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Cross-device sync using the SAME Firestore schema as the iOS app, so the two clients share data:
+ * - favorites: presence sync (upload new / download missing / delete orphaned)
+ * - watched / watchedEpisodes: presence sync (watchedAt Timestamp; Android adds a few extra fields)
+ * - playbackProgress / episodeSnapshots / showNotifications: last-writer-wins by a date field
+ *
+ * IMPORTANT: iOS stores `position`/`duration` in **seconds** (Double) and dates as Firestore
+ * `Timestamp`s — Android's Room stores millis, so we convert on the boundary. Docs are found by a
+ * `whereEqualTo(<key>)` query (matching iOS's `.addDocument` + `whereField`) so there's one doc per
+ * key across both platforms.
+ */
 @Singleton
 class FirebaseSyncService @Inject constructor(
     private val db: FirebaseFirestore,
@@ -42,9 +52,13 @@ class FirebaseSyncService @Inject constructor(
     companion object {
         private const val TAG = "FirebaseSync"
         private const val LAST_SYNC_KEY = "lastSyncDate"
+        private const val SNAPSHOT_SEP = "\n"
     }
 
     var isSyncing = false
+        private set
+
+    var lastSyncError: String? = null
         private set
 
     var lastSyncDate: Long
@@ -53,295 +67,42 @@ class FirebaseSyncService @Inject constructor(
 
     private val uid: String? get() = auth.currentUser?.uid
 
+    private fun col(uid: String, name: String) =
+        db.collection("users").document(uid).collection(name)
+
+    // MARK: - Full sync (mirrors iOS order & behavior)
+
     suspend fun syncAll() {
-        val uid = uid ?: run {
-            Log.w(TAG, "Sync skipped — no user ID")
-            return
-        }
-        if (isSyncing) {
-            Log.w(TAG, "Sync skipped — already syncing")
-            return
-        }
+        val uid = uid ?: run { Log.w(TAG, "Sync skipped — no user ID"); return }
+        if (isSyncing) { Log.w(TAG, "Sync skipped — already syncing"); return }
         isSyncing = true
+        lastSyncError = null
         try {
-            uploadNewFavorites(uid)
-            downloadFavorites(uid)
-            syncDeletedFavorites(uid)
-            syncPlaybackProgress(uid)
-            syncWatchedMovies(uid)
-            syncWatchedEpisodes(uid)
-            syncSnapshots(uid)
-            syncNotifications(uid)
-            lastSyncDate = System.currentTimeMillis()
+            uploadNewFavorites(uid); downloadFavorites(uid); syncDeletedFavorites(uid)
+            uploadWatched(uid); downloadWatched(uid); syncDeletedWatched(uid)
+            uploadWatchedEpisodes(uid); downloadWatchedEpisodes(uid)
+            uploadPlaybackProgresses(uid); downloadPlaybackProgress(uid)
+            uploadEpisodeSnapshots(uid); downloadEpisodeSnapshots(uid)
+            uploadShowNotifications(uid); downloadShowNotifications(uid)
             Log.i(TAG, "Full sync completed")
         } catch (e: Exception) {
-            Log.e(TAG, "Sync failed: ${e.message}")
+            lastSyncError = e.message ?: e.toString()
+            Log.e(TAG, "Sync failed: ${e.message}", e)
         } finally {
+            // Like iOS's `defer`, always stamp the sync time.
+            lastSyncDate = System.currentTimeMillis()
             isSyncing = false
         }
     }
 
     // ---------------------------------------------------------------------------------------------
-    // Playback progress / watched / snapshots / notifications — last-writer-wins by a date field.
-    // Firestore doc IDs can't contain '/', so the stable key is Base64-encoded into the doc id.
+    // Favorites  (collection "favorites", presence sync)
     // ---------------------------------------------------------------------------------------------
-
-    private fun docId(key: String): String =
-        Base64.encodeToString(key.toByteArray(), Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
-
-    // --- Playback progress ---
-    suspend fun uploadPlaybackProgress(entity: PlaybackProgressEntity) {
-        val uid = uid ?: return
-        try {
-            db.collection("users").document(uid).collection("playbackProgress")
-                .document(docId(entity.contentLink)).set(playbackToMap(entity)).await()
-        } catch (e: Exception) {
-            Log.e(TAG, "uploadPlaybackProgress failed: ${e.message}")
-        }
-    }
-
-    suspend fun deletePlaybackProgress(contentLink: String) {
-        val uid = uid ?: return
-        try {
-            db.collection("users").document(uid).collection("playbackProgress")
-                .document(docId(contentLink)).delete().await()
-        } catch (e: Exception) {
-            Log.e(TAG, "deletePlaybackProgress failed: ${e.message}")
-        }
-    }
-
-    private suspend fun syncPlaybackProgress(uid: String) {
-        val cloud = db.collection("users").document(uid).collection("playbackProgress").get().await()
-        val local = playbackProgressDao.getAll().associateBy { it.contentLink }
-        val cloudByKey = cloud.documents.mapNotNull { d -> d.getString("contentLink")?.let { it to d } }.toMap()
-        for ((key, d) in cloudByKey) {
-            val cloudUpdated = d.getLong("updatedAt") ?: 0L
-            val localEntity = local[key]
-            if (localEntity == null || cloudUpdated > localEntity.updatedAt) {
-                playbackProgressDao.upsert(
-                    PlaybackProgressEntity(
-                        contentLink = key,
-                        positionMs = d.getLong("positionMs") ?: 0L,
-                        durationMs = d.getLong("durationMs") ?: 0L,
-                        updatedAt = cloudUpdated,
-                        title = d.getString("title"),
-                        thumbnail = d.getString("thumbnail"),
-                        contentType = d.getString("contentType")
-                    )
-                )
-            }
-        }
-        for (entity in local.values) {
-            val cloudUpdated = cloudByKey[entity.contentLink]?.getLong("updatedAt")
-            if (cloudUpdated == null || entity.updatedAt > cloudUpdated) uploadPlaybackProgress(entity)
-        }
-    }
-
-    private fun playbackToMap(e: PlaybackProgressEntity): Map<String, Any?> = mapOf(
-        "contentLink" to e.contentLink,
-        "positionMs" to e.positionMs,
-        "durationMs" to e.durationMs,
-        "updatedAt" to e.updatedAt,
-        "title" to e.title,
-        "thumbnail" to e.thumbnail,
-        "contentType" to e.contentType
-    )
-
-    // --- Watched movies (show-level) ---
-    suspend fun uploadWatchedMovie(entity: WatchedMovieEntity) {
-        val uid = uid ?: return
-        try {
-            db.collection("users").document(uid).collection("watchedMovies")
-                .document(docId(entity.linkToDetails)).set(watchedMovieToMap(entity)).await()
-        } catch (e: Exception) {
-            Log.e(TAG, "uploadWatchedMovie failed: ${e.message}")
-        }
-    }
-
-    suspend fun deleteWatchedMovie(linkToDetails: String) {
-        val uid = uid ?: return
-        try {
-            db.collection("users").document(uid).collection("watchedMovies")
-                .document(docId(linkToDetails)).delete().await()
-        } catch (e: Exception) {
-            Log.e(TAG, "deleteWatchedMovie failed: ${e.message}")
-        }
-    }
-
-    private suspend fun syncWatchedMovies(uid: String) {
-        val cloud = db.collection("users").document(uid).collection("watchedMovies").get().await()
-        val local = watchedMovieDao.getAll().associateBy { it.linkToDetails }
-        val cloudByKey = cloud.documents.mapNotNull { d -> d.getString("linkToDetails")?.let { it to d } }.toMap()
-        for ((key, d) in cloudByKey) {
-            val cloudUpdated = d.getLong("updatedAt") ?: 0L
-            val localEntity = local[key]
-            if (localEntity == null || cloudUpdated > localEntity.updatedAt) {
-                watchedMovieDao.upsert(
-                    WatchedMovieEntity(
-                        linkToDetails = key,
-                        name = d.getString("name") ?: "",
-                        thumbnail = d.getString("thumbnail") ?: "",
-                        type = d.getString("type") ?: MovieType.MOVIE.name,
-                        updatedAt = cloudUpdated
-                    )
-                )
-            }
-        }
-        for (entity in local.values) {
-            val cloudUpdated = cloudByKey[entity.linkToDetails]?.getLong("updatedAt")
-            if (cloudUpdated == null || entity.updatedAt > cloudUpdated) uploadWatchedMovie(entity)
-        }
-    }
-
-    private fun watchedMovieToMap(e: WatchedMovieEntity): Map<String, Any?> = mapOf(
-        "linkToDetails" to e.linkToDetails,
-        "name" to e.name,
-        "thumbnail" to e.thumbnail,
-        "type" to e.type,
-        "updatedAt" to e.updatedAt
-    )
-
-    // --- Watched episodes ---
-    suspend fun uploadWatchedEpisode(entity: WatchedEpisodeEntity) {
-        val uid = uid ?: return
-        try {
-            db.collection("users").document(uid).collection("watchedEpisodes")
-                .document(docId(entity.episodeLink)).set(watchedEpisodeToMap(entity)).await()
-        } catch (e: Exception) {
-            Log.e(TAG, "uploadWatchedEpisode failed: ${e.message}")
-        }
-    }
-
-    suspend fun deleteWatchedEpisode(episodeLink: String) {
-        val uid = uid ?: return
-        try {
-            db.collection("users").document(uid).collection("watchedEpisodes")
-                .document(docId(episodeLink)).delete().await()
-        } catch (e: Exception) {
-            Log.e(TAG, "deleteWatchedEpisode failed: ${e.message}")
-        }
-    }
-
-    private suspend fun syncWatchedEpisodes(uid: String) {
-        val cloud = db.collection("users").document(uid).collection("watchedEpisodes").get().await()
-        val local = watchedEpisodeDao.getAll().associateBy { it.episodeLink }
-        val cloudByKey = cloud.documents.mapNotNull { d -> d.getString("episodeLink")?.let { it to d } }.toMap()
-        for ((key, d) in cloudByKey) {
-            val cloudUpdated = d.getLong("updatedAt") ?: 0L
-            val localEntity = local[key]
-            if (localEntity == null || cloudUpdated > localEntity.updatedAt) {
-                watchedEpisodeDao.upsert(
-                    WatchedEpisodeEntity(
-                        episodeLink = key,
-                        showLink = d.getString("showLink") ?: "",
-                        seasonNumber = d.getString("seasonNumber") ?: "",
-                        episodeNumber = d.getString("episodeNumber") ?: "",
-                        updatedAt = cloudUpdated
-                    )
-                )
-            }
-        }
-        for (entity in local.values) {
-            val cloudUpdated = cloudByKey[entity.episodeLink]?.getLong("updatedAt")
-            if (cloudUpdated == null || entity.updatedAt > cloudUpdated) uploadWatchedEpisode(entity)
-        }
-    }
-
-    private fun watchedEpisodeToMap(e: WatchedEpisodeEntity): Map<String, Any?> = mapOf(
-        "episodeLink" to e.episodeLink,
-        "showLink" to e.showLink,
-        "seasonNumber" to e.seasonNumber,
-        "episodeNumber" to e.episodeNumber,
-        "updatedAt" to e.updatedAt
-    )
-
-    // --- Episode snapshots (last-writer-wins by lastCheckedAt) ---
-    private suspend fun syncSnapshots(uid: String) {
-        val cloud = db.collection("users").document(uid).collection("episodeSnapshots").get().await()
-        val local = showEpisodeSnapshotDao.getAll().associateBy { it.showLink }
-        val cloudByKey = cloud.documents.mapNotNull { d -> d.getString("showLink")?.let { it to d } }.toMap()
-        for ((key, d) in cloudByKey) {
-            val cloudChecked = d.getLong("lastCheckedAt") ?: 0L
-            val localEntity = local[key]
-            if (localEntity == null || cloudChecked > localEntity.lastCheckedAt) {
-                showEpisodeSnapshotDao.upsert(
-                    ShowEpisodeSnapshotEntity(
-                        showLink = key,
-                        episodeLinksJson = d.getString("episodeLinksJson") ?: "",
-                        lastCheckedAt = cloudChecked
-                    )
-                )
-            }
-        }
-        for (entity in local.values) {
-            val cloudChecked = cloudByKey[entity.showLink]?.getLong("lastCheckedAt")
-            if (cloudChecked == null || entity.lastCheckedAt > cloudChecked) {
-                db.collection("users").document(uid).collection("episodeSnapshots")
-                    .document(docId(entity.showLink))
-                    .set(
-                        mapOf(
-                            "showLink" to entity.showLink,
-                            "episodeLinksJson" to entity.episodeLinksJson,
-                            "lastCheckedAt" to entity.lastCheckedAt
-                        )
-                    ).await()
-            }
-        }
-    }
-
-    // --- Show notifications (last-writer-wins by detectedAt) ---
-    suspend fun uploadNotification(entity: ShowNotificationEntity) {
-        val uid = uid ?: return
-        try {
-            db.collection("users").document(uid).collection("showNotifications")
-                .document(docId(entity.showLink)).set(notificationToMap(entity)).await()
-        } catch (e: Exception) {
-            Log.e(TAG, "uploadNotification failed: ${e.message}")
-        }
-    }
-
-    private suspend fun syncNotifications(uid: String) {
-        val cloud = db.collection("users").document(uid).collection("showNotifications").get().await()
-        val local = showNotificationDao.getAll().associateBy { it.showLink }
-        val cloudByKey = cloud.documents.mapNotNull { d -> d.getString("showLink")?.let { it to d } }.toMap()
-        for ((key, d) in cloudByKey) {
-            val cloudDetected = d.getLong("detectedAt") ?: 0L
-            val localEntity = local[key]
-            if (localEntity == null || cloudDetected > localEntity.detectedAt) {
-                showNotificationDao.upsert(
-                    ShowNotificationEntity(
-                        showLink = key,
-                        showName = d.getString("showName") ?: "",
-                        thumbnail = d.getString("thumbnail") ?: "",
-                        newCount = (d.getLong("newCount") ?: 0L).toInt(),
-                        latestEpisodeLabel = d.getString("latestEpisodeLabel") ?: "",
-                        detectedAt = cloudDetected,
-                        isRead = d.getBoolean("isRead") ?: false
-                    )
-                )
-            }
-        }
-        for (entity in local.values) {
-            val cloudDetected = cloudByKey[entity.showLink]?.getLong("detectedAt")
-            if (cloudDetected == null || entity.detectedAt > cloudDetected) uploadNotification(entity)
-        }
-    }
-
-    private fun notificationToMap(e: ShowNotificationEntity): Map<String, Any?> = mapOf(
-        "showLink" to e.showLink,
-        "showName" to e.showName,
-        "thumbnail" to e.thumbnail,
-        "newCount" to e.newCount,
-        "latestEpisodeLabel" to e.latestEpisodeLabel,
-        "detectedAt" to e.detectedAt,
-        "isRead" to e.isRead
-    )
 
     suspend fun uploadFavorite(movie: MoviesDetailsDataModel) {
         val uid = uid ?: return
         try {
-            uploadSingleFavorite(movie, uid)
-            Log.i(TAG, "Uploaded favorite: ${movie.name}")
+            col(uid, "favorites").add(favoriteToFirestore(movie)).await()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to upload favorite: ${e.message}")
         }
@@ -350,78 +111,378 @@ class FirebaseSyncService @Inject constructor(
     suspend fun deleteFavorite(movie: MoviesDetailsDataModel) {
         val uid = uid ?: return
         try {
-            val snapshot = db.collection("users").document(uid)
-                .collection("favorites")
-                .whereEqualTo("linkToDetails", movie.linkToDetails)
-                .get().await()
-            for (doc in snapshot.documents) {
-                doc.reference.delete().await()
-            }
-            Log.i(TAG, "Deleted favorite from cloud: ${movie.name}")
+            val snapshot = col(uid, "favorites")
+                .whereEqualTo("linkToDetails", movie.linkToDetails).get().await()
+            for (doc in snapshot.documents) doc.reference.delete().await()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to delete favorite: ${e.message}")
         }
     }
 
     private suspend fun uploadNewFavorites(uid: String) {
-        val localFavorites = favoriteRepository.fetchAllFavorites()
-        val snapshot = db.collection("users").document(uid)
-            .collection("favorites").get().await()
-
-        val cloudLinks = snapshot.documents.mapNotNull { it.getString("linkToDetails") }.toSet()
-
-        var uploaded = 0
-        for (favorite in localFavorites) {
+        val local = favoriteRepository.fetchAllFavorites()
+        val cloud = col(uid, "favorites").get().await()
+        val cloudLinks = cloud.documents.mapNotNull { it.getString("linkToDetails") }.toSet()
+        for (favorite in local) {
             if (!cloudLinks.contains(favorite.linkToDetails)) {
-                uploadSingleFavorite(favorite, uid)
-                uploaded++
+                col(uid, "favorites").add(favoriteToFirestore(favorite)).await()
             }
         }
-        Log.i(TAG, "Uploaded $uploaded new favorites to cloud")
-    }
-
-    private suspend fun uploadSingleFavorite(movie: MoviesDetailsDataModel, uid: String) {
-        val data = favoriteToFirestore(movie)
-        db.collection("users").document(uid)
-            .collection("favorites").add(data).await()
     }
 
     private suspend fun downloadFavorites(uid: String) {
-        val snapshot = db.collection("users").document(uid)
-            .collection("favorites").get().await()
-
-        val localFavorites = favoriteRepository.fetchAllFavorites()
-        val localLinks = localFavorites.map { it.linkToDetails }.toSet()
-
-        var downloaded = 0
-        for (doc in snapshot.documents) {
+        val cloud = col(uid, "favorites").get().await()
+        val localLinks = favoriteRepository.fetchAllFavorites().map { it.linkToDetails }.toSet()
+        for (doc in cloud.documents) {
             val data = doc.data ?: continue
-            val linkToDetails = data["linkToDetails"] as? String ?: continue
-
-            if (localLinks.contains(linkToDetails)) continue
-
-            val movie = firestoreToFavorite(data)
-            favoriteRepository.addWithoutSync(movie)
-            downloaded++
+            val link = data["linkToDetails"] as? String ?: continue
+            if (localLinks.contains(link)) continue
+            favoriteRepository.addWithoutSync(firestoreToFavorite(data))
         }
-        Log.i(TAG, "Downloaded $downloaded favorites from cloud")
     }
 
     private suspend fun syncDeletedFavorites(uid: String) {
-        val snapshot = db.collection("users").document(uid)
-            .collection("favorites").get().await()
+        val cloud = col(uid, "favorites").get().await()
+        val localLinks = favoriteRepository.fetchAllFavorites().map { it.linkToDetails }.toSet()
+        for (doc in cloud.documents) {
+            val link = doc.getString("linkToDetails") ?: continue
+            if (!localLinks.contains(link)) doc.reference.delete().await()
+        }
+    }
 
-        val localFavorites = favoriteRepository.fetchAllFavorites()
-        val localLinks = localFavorites.map { it.linkToDetails }.toSet()
+    // ---------------------------------------------------------------------------------------------
+    // Watched  (collection "watched", presence sync; iOS keys: linkToDetails + watchedAt)
+    // ---------------------------------------------------------------------------------------------
 
-        for (doc in snapshot.documents) {
-            val linkToDetails = doc.getString("linkToDetails") ?: continue
-            if (!localLinks.contains(linkToDetails)) {
-                doc.reference.delete().await()
-                Log.i(TAG, "Deleted orphaned cloud favorite: $linkToDetails")
+    suspend fun uploadWatchedMovie(entity: WatchedMovieEntity) {
+        val uid = uid ?: return
+        try {
+            val existing = col(uid, "watched")
+                .whereEqualTo("linkToDetails", entity.linkToDetails).get().await()
+            if (existing.documents.isEmpty()) {
+                col(uid, "watched").add(watchedToMap(entity)).await()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "uploadWatchedMovie failed: ${e.message}")
+        }
+    }
+
+    suspend fun deleteWatchedMovie(linkToDetails: String) {
+        val uid = uid ?: return
+        try {
+            val snapshot = col(uid, "watched")
+                .whereEqualTo("linkToDetails", linkToDetails).get().await()
+            for (doc in snapshot.documents) doc.reference.delete().await()
+        } catch (e: Exception) {
+            Log.e(TAG, "deleteWatchedMovie failed: ${e.message}")
+        }
+    }
+
+    private suspend fun uploadWatched(uid: String) {
+        val cloud = col(uid, "watched").get().await()
+        val cloudLinks = cloud.documents.mapNotNull { it.getString("linkToDetails") }.toSet()
+        for (item in watchedMovieDao.getAll()) {
+            if (!cloudLinks.contains(item.linkToDetails)) {
+                col(uid, "watched").add(watchedToMap(item)).await()
             }
         }
     }
+
+    private suspend fun downloadWatched(uid: String) {
+        val cloud = col(uid, "watched").get().await()
+        val localLinks = watchedMovieDao.getAll().map { it.linkToDetails }.toSet()
+        for (doc in cloud.documents) {
+            val link = doc.getString("linkToDetails") ?: continue
+            if (localLinks.contains(link)) continue
+            watchedMovieDao.upsert(
+                WatchedMovieEntity(
+                    linkToDetails = link,
+                    name = doc.getString("name") ?: "",
+                    thumbnail = doc.getString("thumbnail") ?: "",
+                    type = doc.getString("type") ?: MovieType.MOVIE.name,
+                    updatedAt = doc.getTimestamp("watchedAt")?.toDate()?.time ?: System.currentTimeMillis()
+                )
+            )
+        }
+    }
+
+    private suspend fun syncDeletedWatched(uid: String) {
+        val cloud = col(uid, "watched").get().await()
+        val localLinks = watchedMovieDao.getAll().map { it.linkToDetails }.toSet()
+        for (doc in cloud.documents) {
+            val link = doc.getString("linkToDetails") ?: continue
+            if (!localLinks.contains(link)) doc.reference.delete().await()
+        }
+    }
+
+    private fun watchedToMap(e: WatchedMovieEntity): Map<String, Any> = mapOf(
+        "linkToDetails" to e.linkToDetails,
+        "watchedAt" to Timestamp(Date(e.updatedAt)),
+        "name" to e.name,
+        "thumbnail" to e.thumbnail,
+        "type" to e.type
+    )
+
+    // ---------------------------------------------------------------------------------------------
+    // Watched episodes  (collection "watchedEpisodes", presence sync; iOS key: episodeLink)
+    // ---------------------------------------------------------------------------------------------
+
+    suspend fun uploadWatchedEpisode(entity: WatchedEpisodeEntity) {
+        val uid = uid ?: return
+        try {
+            val existing = col(uid, "watchedEpisodes")
+                .whereEqualTo("episodeLink", entity.episodeLink).get().await()
+            if (existing.documents.isEmpty()) {
+                col(uid, "watchedEpisodes").add(watchedEpisodeToMap(entity)).await()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "uploadWatchedEpisode failed: ${e.message}")
+        }
+    }
+
+    suspend fun deleteWatchedEpisode(episodeLink: String) {
+        val uid = uid ?: return
+        try {
+            val snapshot = col(uid, "watchedEpisodes")
+                .whereEqualTo("episodeLink", episodeLink).get().await()
+            for (doc in snapshot.documents) doc.reference.delete().await()
+        } catch (e: Exception) {
+            Log.e(TAG, "deleteWatchedEpisode failed: ${e.message}")
+        }
+    }
+
+    private suspend fun uploadWatchedEpisodes(uid: String) {
+        val cloud = col(uid, "watchedEpisodes").get().await()
+        val cloudLinks = cloud.documents.mapNotNull { it.getString("episodeLink") }.toSet()
+        for (item in watchedEpisodeDao.getAll()) {
+            if (!cloudLinks.contains(item.episodeLink)) {
+                col(uid, "watchedEpisodes").add(watchedEpisodeToMap(item)).await()
+            }
+        }
+    }
+
+    private suspend fun downloadWatchedEpisodes(uid: String) {
+        val cloud = col(uid, "watchedEpisodes").get().await()
+        val localLinks = watchedEpisodeDao.getAll().map { it.episodeLink }.toSet()
+        for (doc in cloud.documents) {
+            val link = doc.getString("episodeLink") ?: continue
+            if (localLinks.contains(link)) continue
+            watchedEpisodeDao.upsert(
+                WatchedEpisodeEntity(
+                    episodeLink = link,
+                    showLink = doc.getString("showLink") ?: "",
+                    seasonNumber = doc.getString("seasonNumber") ?: "",
+                    episodeNumber = doc.getString("episodeNumber") ?: "",
+                    updatedAt = doc.getTimestamp("watchedAt")?.toDate()?.time ?: System.currentTimeMillis()
+                )
+            )
+        }
+    }
+
+    private fun watchedEpisodeToMap(e: WatchedEpisodeEntity): Map<String, Any> = mapOf(
+        "episodeLink" to e.episodeLink,
+        "watchedAt" to Timestamp(Date(e.updatedAt)),
+        "showLink" to e.showLink,
+        "seasonNumber" to e.seasonNumber,
+        "episodeNumber" to e.episodeNumber
+    )
+
+    // ---------------------------------------------------------------------------------------------
+    // Playback progress  (collection "playbackProgress", last-writer-wins by updatedAt)
+    // iOS fields: contentLink, position(sec Double), duration(sec Double), updatedAt(Timestamp), title, thumbnail, contentType
+    // ---------------------------------------------------------------------------------------------
+
+    suspend fun uploadPlaybackProgress(entity: PlaybackProgressEntity) {
+        val uid = uid ?: return
+        try {
+            val snap = col(uid, "playbackProgress")
+                .whereEqualTo("contentLink", entity.contentLink).get().await()
+            val doc = snap.documents.firstOrNull()
+            if (doc != null) {
+                val cloudDate = doc.getTimestamp("updatedAt")?.toDate()?.time ?: 0L
+                if (entity.updatedAt >= cloudDate) doc.reference.set(playbackToMap(entity)).await()
+            } else {
+                col(uid, "playbackProgress").add(playbackToMap(entity)).await()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "uploadPlaybackProgress failed: ${e.message}")
+        }
+    }
+
+    suspend fun deletePlaybackProgress(contentLink: String) {
+        val uid = uid ?: return
+        try {
+            val snapshot = col(uid, "playbackProgress")
+                .whereEqualTo("contentLink", contentLink).get().await()
+            for (doc in snapshot.documents) doc.reference.delete().await()
+        } catch (e: Exception) {
+            Log.e(TAG, "deletePlaybackProgress failed: ${e.message}")
+        }
+    }
+
+    private suspend fun uploadPlaybackProgresses(uid: String) {
+        for (item in playbackProgressDao.getAll()) uploadPlaybackProgress(item)
+    }
+
+    private suspend fun downloadPlaybackProgress(uid: String) {
+        val cloud = col(uid, "playbackProgress").get().await()
+        val localByLink = playbackProgressDao.getAll().associateBy { it.contentLink }
+        for (doc in cloud.documents) {
+            val link = doc.getString("contentLink") ?: continue
+            val positionMs = ((doc.getDouble("position") ?: 0.0) * 1000).toLong()
+            val durationMs = ((doc.getDouble("duration") ?: 0.0) * 1000).toLong()
+            val date = doc.getTimestamp("updatedAt")?.toDate()?.time ?: 0L
+            val local = localByLink[link]
+            if (local == null || date > local.updatedAt) {
+                playbackProgressDao.upsert(
+                    PlaybackProgressEntity(
+                        contentLink = link,
+                        positionMs = positionMs,
+                        durationMs = durationMs,
+                        updatedAt = date,
+                        title = doc.getString("title"),
+                        thumbnail = doc.getString("thumbnail"),
+                        contentType = doc.getString("contentType")
+                    )
+                )
+            }
+        }
+    }
+
+    private fun playbackToMap(e: PlaybackProgressEntity): Map<String, Any?> = mapOf(
+        "contentLink" to e.contentLink,
+        "position" to e.positionMs / 1000.0,
+        "duration" to e.durationMs / 1000.0,
+        "updatedAt" to Timestamp(Date(e.updatedAt)),
+        "title" to (e.title ?: ""),
+        "thumbnail" to (e.thumbnail ?: ""),
+        "contentType" to (e.contentType ?: "")
+    )
+
+    // ---------------------------------------------------------------------------------------------
+    // Episode snapshots  (collection "episodeSnapshots", last-writer-wins by lastCheckedAt)
+    // iOS fields: linkToDetails, knownEpisodeLinks([String]), lastCheckedAt(Timestamp)
+    // ---------------------------------------------------------------------------------------------
+
+    private suspend fun uploadEpisodeSnapshots(uid: String) {
+        for (item in showEpisodeSnapshotDao.getAll()) {
+            try {
+                val snap = col(uid, "episodeSnapshots")
+                    .whereEqualTo("linkToDetails", item.showLink).get().await()
+                val doc = snap.documents.firstOrNull()
+                if (doc != null) {
+                    val cloudDate = doc.getTimestamp("lastCheckedAt")?.toDate()?.time ?: 0L
+                    if (item.lastCheckedAt > cloudDate) doc.reference.set(snapshotToMap(item)).await()
+                } else {
+                    col(uid, "episodeSnapshots").add(snapshotToMap(item)).await()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "uploadEpisodeSnapshot failed: ${e.message}")
+            }
+        }
+    }
+
+    private suspend fun downloadEpisodeSnapshots(uid: String) {
+        val cloud = col(uid, "episodeSnapshots").get().await()
+        val localByLink = showEpisodeSnapshotDao.getAll().associateBy { it.showLink }
+        for (doc in cloud.documents) {
+            val link = doc.getString("linkToDetails") ?: continue
+            @Suppress("UNCHECKED_CAST")
+            val links = (doc.get("knownEpisodeLinks") as? List<*>)?.mapNotNull { it as? String } ?: emptyList()
+            val date = doc.getTimestamp("lastCheckedAt")?.toDate()?.time ?: 0L
+            val local = localByLink[link]
+            if (local == null || date > local.lastCheckedAt) {
+                showEpisodeSnapshotDao.upsert(
+                    ShowEpisodeSnapshotEntity(
+                        showLink = link,
+                        episodeLinksJson = links.joinToString(SNAPSHOT_SEP),
+                        lastCheckedAt = date
+                    )
+                )
+            }
+        }
+    }
+
+    private fun snapshotToMap(e: ShowEpisodeSnapshotEntity): Map<String, Any> = mapOf(
+        "linkToDetails" to e.showLink,
+        "knownEpisodeLinks" to if (e.episodeLinksJson.isEmpty()) emptyList() else e.episodeLinksJson.split(SNAPSHOT_SEP),
+        "lastCheckedAt" to Timestamp(Date(e.lastCheckedAt))
+    )
+
+    // ---------------------------------------------------------------------------------------------
+    // Show notifications  (collection "showNotifications", last-writer-wins by detectedAt + isRead)
+    // iOS fields: showLinkToDetails, showName, showThumbnail, newEpisodeCount,
+    //             latestEpisodeNumber, latestEpisodeName, detectedAt(Timestamp), isRead
+    // ---------------------------------------------------------------------------------------------
+
+    suspend fun uploadNotification(entity: ShowNotificationEntity) {
+        val uid = uid ?: return
+        try {
+            val snap = col(uid, "showNotifications")
+                .whereEqualTo("showLinkToDetails", entity.showLink).get().await()
+            val doc = snap.documents.firstOrNull()
+            if (doc != null) {
+                val cloudDate = doc.getTimestamp("detectedAt")?.toDate()?.time ?: 0L
+                val cloudRead = doc.getBoolean("isRead") ?: false
+                if (entity.detectedAt > cloudDate) {
+                    doc.reference.set(notificationToMap(entity)).await()
+                } else if (entity.detectedAt == cloudDate && entity.isRead && !cloudRead) {
+                    doc.reference.update("isRead", true).await()
+                }
+            } else {
+                col(uid, "showNotifications").add(notificationToMap(entity)).await()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "uploadNotification failed: ${e.message}")
+        }
+    }
+
+    private suspend fun uploadShowNotifications(uid: String) {
+        for (item in showNotificationDao.getAll()) uploadNotification(item)
+    }
+
+    private suspend fun downloadShowNotifications(uid: String) {
+        val cloud = col(uid, "showNotifications").get().await()
+        val localByLink = showNotificationDao.getAll().associateBy { it.showLink }
+        for (doc in cloud.documents) {
+            val link = doc.getString("showLinkToDetails") ?: continue
+            val cloudDate = doc.getTimestamp("detectedAt")?.toDate()?.time ?: 0L
+            val cloudRead = doc.getBoolean("isRead") ?: false
+            val label = listOf(doc.getString("latestEpisodeNumber") ?: "", doc.getString("latestEpisodeName") ?: "")
+                .joinToString(" ").trim()
+            val local = localByLink[link]
+            if (local == null || cloudDate > local.detectedAt) {
+                showNotificationDao.upsert(
+                    ShowNotificationEntity(
+                        showLink = link,
+                        showName = doc.getString("showName") ?: "",
+                        thumbnail = doc.getString("showThumbnail") ?: "",
+                        newCount = (doc.getLong("newEpisodeCount") ?: 0L).toInt(),
+                        latestEpisodeLabel = label,
+                        detectedAt = cloudDate,
+                        isRead = cloudRead
+                    )
+                )
+            } else if (cloudDate == local.detectedAt && cloudRead && !local.isRead) {
+                showNotificationDao.upsert(local.copy(isRead = true))
+            }
+        }
+    }
+
+    private fun notificationToMap(e: ShowNotificationEntity): Map<String, Any> = mapOf(
+        "showLinkToDetails" to e.showLink,
+        "showName" to e.showName,
+        "showThumbnail" to e.thumbnail,
+        "newEpisodeCount" to e.newCount,
+        "latestEpisodeNumber" to "",
+        "latestEpisodeName" to e.latestEpisodeLabel,
+        "detectedAt" to Timestamp(Date(e.detectedAt)),
+        "isRead" to e.isRead
+    )
+
+    // ---------------------------------------------------------------------------------------------
+    // Favorite serialization (matches iOS `favoriteToFirestore` / `firestoreToFavorite`)
+    // ---------------------------------------------------------------------------------------------
 
     private fun favoriteToFirestore(movie: MoviesDetailsDataModel): Map<String, Any> {
         val data = mutableMapOf<String, Any>(
@@ -442,34 +503,27 @@ class FirebaseSyncService @Inject constructor(
             "production" to movie.production,
             "addedAt" to Timestamp(Date(movie.addedAt ?: System.currentTimeMillis()))
         )
-
-        val seasons = movie.seasonsList
-        if (!seasons.isNullOrEmpty()) {
-            val seasonsData = seasons.map { season ->
-                val episodes = season.episodes.map { ep ->
-                    mapOf(
-                        "episodeNumber" to ep.episodeNumber,
-                        "episodeName" to ep.episodeName,
-                        "link" to ep.link
-                    )
-                }
+        movie.seasonsList?.takeIf { it.isNotEmpty() }?.let { seasons ->
+            data["seasonsList"] = seasons.map { season ->
                 mapOf(
                     "seasonId" to season.seasonId,
                     "seasonNumber" to season.seasonNumber,
-                    "episodes" to episodes
+                    "episodes" to season.episodes.map { ep ->
+                        mapOf(
+                            "episodeNumber" to ep.episodeNumber,
+                            "episodeName" to ep.episodeName,
+                            "link" to ep.link
+                        )
+                    }
                 )
             }
-            data["seasonsList"] = seasonsData
         }
-
         return data
     }
 
     @Suppress("UNCHECKED_CAST")
     private fun firestoreToFavorite(data: Map<String, Any?>): MoviesDetailsDataModel {
-        val typeString = data["type"] as? String ?: "Movie"
-        val type = if (typeString == "Movie") MovieType.MOVIE else MovieType.TV_SHOW
-
+        val type = if ((data["type"] as? String ?: "Movie") == "Movie") MovieType.MOVIE else MovieType.TV_SHOW
         val seasonsList = (data["seasonsList"] as? List<Map<String, Any?>>)?.map { seasonData ->
             val episodes = (seasonData["episodes"] as? List<Map<String, Any?>> ?: emptyList()).map { epData ->
                 MovieEpisodesDataModel(
@@ -503,12 +557,7 @@ class FirebaseSyncService @Inject constructor(
             production = data["production"] as? String ?: "",
             seasonsList = seasonsList
         )
-
-        val addedAt = data["addedAt"]
-        if (addedAt is Timestamp) {
-            movie.addedAt = addedAt.toDate().time
-        }
-
+        (data["addedAt"] as? Timestamp)?.let { movie.addedAt = it.toDate().time }
         return movie
     }
 }

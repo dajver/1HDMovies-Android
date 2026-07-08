@@ -79,6 +79,7 @@ class AccountFragment : BaseFragment<FragmentAccountBinding>(FragmentAccountBind
                 binding.btnSync.text = getString(R.string.sync_now)
                 binding.btnSync.isEnabled = true
                 updateUI()
+                syncService.lastSyncError?.let { toast(getString(R.string.sign_in_error, it)) }
             }
         }
 
