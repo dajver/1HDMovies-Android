@@ -11,15 +11,35 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tvName"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            android:padding="10dp"
-            android:text="@string/favorites"
-            android:textColor="@android:color/white"
-            android:textSize="24sp" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:padding="10dp"
+                android:text="@string/favorites"
+                android:textColor="@android:color/white"
+                android:textSize="24sp" />
+
+            <ImageButton
+                android:id="@+id/btnWatchedScreen"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="10dp"
+                android:background="@drawable/item_selected_background"
+                android:contentDescription="@string/watched"
+                android:focusable="true"
+                android:padding="10dp"
+                android:src="@drawable/ic_eye" />
+
+        </LinearLayout>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvFavorites"

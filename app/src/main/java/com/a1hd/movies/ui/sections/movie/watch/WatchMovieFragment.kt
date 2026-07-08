@@ -24,6 +24,10 @@ class WatchMovieFragment: BaseFragment<FragmentWatchMovieBinding>(FragmentWatchM
     var movieTitle: String? = null
     var episodes: ArrayList<MovieEpisodesDataModel>? = null
     var currentEpisodeIndex: Int = 0
+    var showLink: String? = null
+    var thumbnail: String? = null
+    var contentType: String? = null
+    var seasonNumber: String? = null
 
     private val playerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -55,6 +59,10 @@ class WatchMovieFragment: BaseFragment<FragmentWatchMovieBinding>(FragmentWatchM
             @Suppress("DEPRECATION")
             episodes = it.getSerializable(ARG_EPISODES) as? ArrayList<MovieEpisodesDataModel>
             currentEpisodeIndex = it.getInt(ARG_EPISODE_INDEX, 0)
+            showLink = it.getString(ARG_SHOW_LINK)
+            thumbnail = it.getString(ARG_THUMBNAIL)
+            contentType = it.getString(ARG_CONTENT_TYPE)
+            seasonNumber = it.getString(ARG_SEASON_NUMBER)
         }
     }
 
@@ -82,6 +90,10 @@ class WatchMovieFragment: BaseFragment<FragmentWatchMovieBinding>(FragmentWatchM
                 referer = referer,
                 title = movieTitle,
                 contentLink = movieUrl,
+                showLink = showLink,
+                thumbnail = thumbnail,
+                contentType = contentType,
+                seasonNumber = seasonNumber,
                 subtitles = ArrayList(subtitles),
                 episodes = episodes,
                 currentEpisodeIndex = currentEpisodeIndex,
@@ -141,13 +153,21 @@ class WatchMovieFragment: BaseFragment<FragmentWatchMovieBinding>(FragmentWatchM
         private const val ARG_TITLE = "ARG_TITLE"
         private const val ARG_EPISODES = "ARG_EPISODES"
         private const val ARG_EPISODE_INDEX = "ARG_EPISODE_INDEX"
+        private const val ARG_SHOW_LINK = "ARG_SHOW_LINK"
+        private const val ARG_THUMBNAIL = "ARG_THUMBNAIL"
+        private const val ARG_CONTENT_TYPE = "ARG_CONTENT_TYPE"
+        private const val ARG_SEASON_NUMBER = "ARG_SEASON_NUMBER"
 
         @JvmStatic
         fun newInstance(
             movieUrl: String?,
             title: String? = null,
             episodes: ArrayList<MovieEpisodesDataModel>? = null,
-            episodeIndex: Int = 0
+            episodeIndex: Int = 0,
+            showLink: String? = null,
+            thumbnail: String? = null,
+            contentType: String? = null,
+            seasonNumber: String? = null
         ): WatchMovieFragment {
             val fragment = WatchMovieFragment()
             fragment.arguments = Bundle().apply {
@@ -155,6 +175,10 @@ class WatchMovieFragment: BaseFragment<FragmentWatchMovieBinding>(FragmentWatchM
                 title?.let { putString(ARG_TITLE, it) }
                 episodes?.let { putSerializable(ARG_EPISODES, it) }
                 putInt(ARG_EPISODE_INDEX, episodeIndex)
+                showLink?.let { putString(ARG_SHOW_LINK, it) }
+                thumbnail?.let { putString(ARG_THUMBNAIL, it) }
+                contentType?.let { putString(ARG_CONTENT_TYPE, it) }
+                seasonNumber?.let { putString(ARG_SEASON_NUMBER, it) }
             }
             return fragment
         }

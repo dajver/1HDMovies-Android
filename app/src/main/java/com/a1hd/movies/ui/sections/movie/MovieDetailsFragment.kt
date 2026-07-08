@@ -53,11 +53,25 @@ class MovieDetailsFragment: BaseFragment<FragmentMovieDetailsBinding>(FragmentMo
             episodesRecyclerAdapter.setEpisodes(it.episodes)
         }
         episodesRecyclerAdapter.onEpisodeClickListener = { episode ->
+            val details = movieDetailsViewModel.getDetails()
             val selectedSeason = movieDetailsViewModel.getSelectedSeason()
             val episodes = selectedSeason?.episodes?.let { ArrayList(it) }
             val index = episodes?.indexOfFirst { it.link == episode.link }?.coerceAtLeast(0) ?: 0
-            val title = movieDetailsViewModel.getMovieName()
-            navigationRouter.navigateTo(Router.WatchMovie(episode.link, title, episodes, index))
+            navigationRouter.navigateTo(
+                Router.WatchMovie(
+                    movieUrl = episode.link,
+                    title = details?.name,
+                    episodes = episodes,
+                    episodeIndex = index,
+                    showLink = details?.linkToDetails,
+                    thumbnail = details?.thumbnail,
+                    contentType = details?.type?.name,
+                    seasonNumber = selectedSeason?.seasonNumber
+                )
+            )
+        }
+        episodesRecyclerAdapter.onEpisodeLongClickListener = { episode ->
+            showEpisodeWatchedMenu(episode)
         }
         youMayAlsoLikeRecyclerAdapter.onMovieClickListener = {
             navigationRouter.navigateTo(Router.MovieDetails(it.link))
@@ -91,7 +105,8 @@ class MovieDetailsFragment: BaseFragment<FragmentMovieDetailsBinding>(FragmentMo
             val seasons = movie.seasonsList
             if (!seasons.isNullOrEmpty()) {
                 seasonsRecyclerAdapter.setSeasons(seasons)
-                binding.rvSeasons.scrollToPosition(seasonsRecyclerAdapter.itemCount - 1)
+                val selectedIndex = seasons.indexOfFirst { it.isSelected }.coerceAtLeast(0)
+                binding.rvSeasons.scrollToPosition(selectedIndex)
 
                 val episodes = seasons.firstOrNull { it.isSelected }?.episodes ?: seasons.lastOrNull()?.episodes
                 if (!episodes.isNullOrEmpty()) {
@@ -100,7 +115,15 @@ class MovieDetailsFragment: BaseFragment<FragmentMovieDetailsBinding>(FragmentMo
             }
 
             binding.btnWatchMovie.setOnClickListener {
-                navigationRouter.navigateTo(Router.WatchMovie(movie.watchMovieLinkWithEpisodeId, title = movie.name))
+                navigationRouter.navigateTo(
+                    Router.WatchMovie(
+                        movieUrl = movie.watchMovieLinkWithEpisodeId,
+                        title = movie.name,
+                        showLink = movie.linkToDetails,
+                        thumbnail = movie.thumbnail,
+                        contentType = movie.type.name
+                    )
+                )
             }
 
             addFavoriteButtonState(movie)
@@ -108,12 +131,38 @@ class MovieDetailsFragment: BaseFragment<FragmentMovieDetailsBinding>(FragmentMo
                 movieDetailsViewModel.favorite(movie)
                 addFavoriteButtonState(movie)
             }
+            binding.btnWatched.setOnClickListener {
+                movieDetailsViewModel.toggleMovieWatched()
+            }
+        }
+
+        movieDetailsViewModel.watchedEpisodesLiveData.observe(viewLifecycleOwner) { links ->
+            episodesRecyclerAdapter.setWatchedLinks(links)
+        }
+        movieDetailsViewModel.watchedMovieLiveData.observe(viewLifecycleOwner) { isWatched ->
+            binding.btnWatched.text = getString(
+                if (isWatched) R.string.mark_unwatched else R.string.mark_watched
+            )
         }
 
         movieDetailsViewModel.fetchYouMayAlsoLike(movieUrl!!)
         movieDetailsViewModel.fetchYouMayAlsoLikeLiveData.observe(viewLifecycleOwner) {
             youMayAlsoLikeRecyclerAdapter.setMovies(it.toMutableList())
         }
+    }
+
+    private fun showEpisodeWatchedMenu(episode: com.a1hd.movies.api.repository.MovieEpisodesDataModel) {
+        val seasonNumber = movieDetailsViewModel.getSelectedSeason()?.seasonNumber ?: ""
+        val isWatched = movieDetailsViewModel.watchedEpisodesLiveData.value?.contains(episode.link) == true
+        val action = getString(
+            if (isWatched) R.string.mark_episode_unwatched else R.string.mark_episode_watched
+        )
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("${episode.episodeNumber} ${episode.episodeName}".trim())
+            .setItems(arrayOf(action)) { _, _ ->
+                movieDetailsViewModel.toggleEpisodeWatched(episode, seasonNumber)
+            }
+            .show()
     }
 
     private fun addFavoriteButtonState(movie: MoviesDetailsDataModel) {

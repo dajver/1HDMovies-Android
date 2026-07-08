@@ -261,6 +261,17 @@
                             android:padding="10dp"
                             android:text="@string/watch_movie" />
 
+                        <Button
+                            android:id="@+id/btnWatched"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="20dp"
+                            android:layout_marginStart="10dp"
+                            android:background="@drawable/button_orange_background"
+                            android:focusable="true"
+                            android:padding="10dp"
+                            android:text="@string/mark_watched" />
+
                     </LinearLayout>
 
                 </LinearLayout>

@@ -13,10 +13,17 @@ import javax.inject.Inject
 class EpisodesRecyclerAdapter @Inject constructor(): RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private var episodesList: MutableList<MovieEpisodesDataModel> = mutableListOf()
+    private var watchedLinks: Set<String> = emptySet()
     var onEpisodeClickListener: (MovieEpisodesDataModel) -> Unit = { }
+    var onEpisodeLongClickListener: (MovieEpisodesDataModel) -> Unit = { }
 
     fun setEpisodes(groups: MutableList<MovieEpisodesDataModel>) {
         this.episodesList = groups
+        notifyDataSetChanged()
+    }
+
+    fun setWatchedLinks(links: Set<String>) {
+        this.watchedLinks = links
         notifyDataSetChanged()
     }
 
@@ -28,7 +35,7 @@ class EpisodesRecyclerAdapter @Inject constructor(): RecyclerView.Adapter<Recycl
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val viewHolder = (holder as EpisodesHolder)
         val model = episodesList[position]
-        viewHolder.bind(model)
+        viewHolder.bind(model, watchedLinks.contains(model.link))
 
         holder.itemView.isFocusedByDefault = true
         holder.itemView.isSelected = model.isSelected
@@ -49,6 +56,11 @@ class EpisodesRecyclerAdapter @Inject constructor(): RecyclerView.Adapter<Recycl
             Handler(Looper.getMainLooper()).postDelayed({
                 onEpisodeClickListener.invoke(model)
             }, 500)
+        }
+
+        holder.itemView.setOnLongClickListener {
+            onEpisodeLongClickListener.invoke(model)
+            true
         }
     }
 

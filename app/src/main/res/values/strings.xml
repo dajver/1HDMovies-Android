@@ -62,4 +62,11 @@
     <string name="all">All</string>
     <string name="movie">Movie</string>
     <string name="tv_series">TV Series</string>
+    <string name="watched">Watched</string>
+    <string name="mark_watched">Mark Watched</string>
+    <string name="mark_unwatched">Mark Unwatched</string>
+    <string name="mark_episode_watched">Mark episode watched</string>
+    <string name="mark_episode_unwatched">Mark episode unwatched</string>
+    <string name="no_watched">Nothing watched yet</string>
+    <string name="no_favorites">No favorites yet</string>
 </resources>

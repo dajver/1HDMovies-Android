@@ -26,6 +26,9 @@ class FavoriteFragment: BaseFragment<FragmentFavoriteBinding>(FragmentFavoriteBi
             navigationRouter.navigateTo(Router.MovieDetails(movieUrl))
         }
         binding.rvFavorites.adapter = favoritesRecyclerAdapter
+        binding.btnWatchedScreen.setOnClickListener {
+            navigationRouter.navigateTo(Router.Watched)
+        }
 
         favoriteViewModel.fetchAllFavorites()
         favoriteViewModel.fetchFavoritesLiveData.observe(viewLifecycleOwner) {

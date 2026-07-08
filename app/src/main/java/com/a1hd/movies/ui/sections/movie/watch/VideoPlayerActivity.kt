@@ -57,20 +57,30 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVid
     @Inject
     lateinit var playbackProgressRepository: PlaybackProgressRepository
 
+    @Inject
+    lateinit var watchedRepository: com.a1hd.movies.db.repository.WatchedRepository
+
+    @Inject
+    lateinit var watchedEpisodeRepository: com.a1hd.movies.db.repository.WatchedEpisodeRepository
+
     private lateinit var simpleExoplayer: ExoPlayer
     private lateinit var videoUrl: String
     private var referer: String = "${BuildConfig.BASE_URL}/"
 
     /** Stable key for resume (episode link / movie watch URL) — never the per-session .m3u8. */
     private var contentLink: String = ""
+    private var showLink: String? = null
+    private var seasonNumber: String? = null
     private var contentThumbnail: String? = null
     private var contentType: String? = null
+    private var watchedMarked = false
     private var pendingResumeMs: Long = 0L
     private val playerScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     private val progressSaveRunnable = object : Runnable {
         override fun run() {
             saveProgress()
+            checkWatchedThreshold()
             subtitleHandler.postDelayed(this, PROGRESS_SAVE_INTERVAL_MS)
         }
     }
@@ -119,6 +129,8 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVid
         currentServerIndex = bundle?.getInt(EXTRA_SERVER_INDEX, 0) ?: 0
         movieTitle = bundle?.getString(EXTRA_TITLE)
         contentLink = bundle?.getString(EXTRA_CONTENT_LINK) ?: ""
+        showLink = bundle?.getString(EXTRA_SHOW_LINK)
+        seasonNumber = bundle?.getString(EXTRA_SEASON_NUMBER)
         contentThumbnail = bundle?.getString(EXTRA_THUMBNAIL)
         contentType = bundle?.getString(EXTRA_CONTENT_TYPE)
 
@@ -375,13 +387,28 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVid
         val durationRaw = simpleExoplayer.duration
         val durationMs = if (durationRaw > 0) durationRaw else 0L
         if (positionMs <= 0) return
-        val isMovie = (episodes?.size ?: 0) <= 1
+        val isMovie = episodes.isNullOrEmpty()
         val title = if (isMovie) movieTitle else null
         val thumbnail = if (isMovie) contentThumbnail else null
         val type = if (isMovie) contentType else null
         // Fire-and-forget on an app-scoped context so it survives the activity finishing.
         CoroutineScope(Dispatchers.IO).launch {
             playbackProgressRepository.save(contentLink, positionMs, durationMs, title, thumbnail, type)
+        }
+    }
+
+    /** After 5 minutes of playback, mark the current episode (shows) watched. Movies rely on progress. */
+    private fun checkWatchedThreshold() {
+        if (watchedMarked || contentLink.isBlank() || !::simpleExoplayer.isInitialized) return
+        if (simpleExoplayer.currentPosition < WATCHED_THRESHOLD_MS) return
+        val eps = episodes
+        if (eps.isNullOrEmpty()) return // movies are not auto-marked show-level watched
+        watchedMarked = true
+        val episodeNumber = eps.getOrNull(currentEpisodeIndex)?.episodeNumber ?: ""
+        val show = showLink ?: ""
+        val season = seasonNumber ?: ""
+        CoroutineScope(Dispatchers.IO).launch {
+            watchedEpisodeRepository.markWatched(contentLink, show, season, episodeNumber)
         }
     }
 
@@ -444,10 +471,13 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVid
         const val RESULT_EPISODE_INDEX = "RESULT_EPISODE_INDEX"
 
         private const val PROGRESS_SAVE_INTERVAL_MS = 10_000L
+        private const val WATCHED_THRESHOLD_MS = 300_000L // 5 minutes
 
         private const val EXTRA_TITLE = "EXTRA_TITLE"
         private const val EXTRA_LINK = "EXTRA_LINK"
         private const val EXTRA_CONTENT_LINK = "EXTRA_CONTENT_LINK"
+        private const val EXTRA_SHOW_LINK = "EXTRA_SHOW_LINK"
+        private const val EXTRA_SEASON_NUMBER = "EXTRA_SEASON_NUMBER"
         private const val EXTRA_THUMBNAIL = "EXTRA_THUMBNAIL"
         private const val EXTRA_CONTENT_TYPE = "EXTRA_CONTENT_TYPE"
         private const val EXTRA_REFERER = "EXTRA_REFERER"
@@ -464,6 +494,8 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVid
             referer: String = "${BuildConfig.BASE_URL}/",
             title: String? = null,
             contentLink: String? = null,
+            showLink: String? = null,
+            seasonNumber: String? = null,
             thumbnail: String? = null,
             contentType: String? = null,
             subtitles: ArrayList<SubtitleTrack> = arrayListOf(),
@@ -477,6 +509,8 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVid
             intent.putExtra(EXTRA_LINK, url)
             title?.let { intent.putExtra(EXTRA_TITLE, it) }
             contentLink?.let { intent.putExtra(EXTRA_CONTENT_LINK, it) }
+            showLink?.let { intent.putExtra(EXTRA_SHOW_LINK, it) }
+            seasonNumber?.let { intent.putExtra(EXTRA_SEASON_NUMBER, it) }
             thumbnail?.let { intent.putExtra(EXTRA_THUMBNAIL, it) }
             contentType?.let { intent.putExtra(EXTRA_CONTENT_TYPE, it) }
             intent.putExtra(EXTRA_REFERER, referer)
