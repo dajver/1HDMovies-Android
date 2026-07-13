@@ -20,6 +20,7 @@
     <string name="all_movies">All Movies</string>
     <string name="all_tv_shows">All TV Shows</string>
     <string name="search_here">Search Here…</string>
+    <string name="search_placeholder">Search movies, TV shows…</string>
     <string name="search">Search</string>
     <string name="favorites">Favorites</string>
     <string name="add_favorites">Add Favorite</string>

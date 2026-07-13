@@ -14,4 +14,8 @@
     <color name="accent_red_dark">#D32F2F</color>
     <color name="default_background">#2C2C2E</color>
     <color name="transparent_background">#90000000</color>
+    <!-- iOS system gray — search icons, hint text, secondary labels. -->
+    <color name="ios_gray">#8E8E93</color>
+    <!-- Search field fill (iOS gray-opacity-0.2 over black). -->
+    <color name="search_bar_fill">#1C1C1E</color>
 </resources>

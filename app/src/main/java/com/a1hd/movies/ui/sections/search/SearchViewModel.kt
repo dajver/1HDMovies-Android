@@ -17,9 +17,21 @@ class SearchViewModel @Inject constructor(
     private val fetchSearchResultMutableLiveData = MutableLiveData<List<MoviesDataModel>>()
     val fetchSearchResultLiveData: LiveData<List<MoviesDataModel>> = fetchSearchResultMutableLiveData
 
+    private val isLoadingMutableLiveData = MutableLiveData(false)
+    val isLoadingLiveData: LiveData<Boolean> = isLoadingMutableLiveData
+
     fun search(keyword: String) = launch {
-        val searchKeyword = keyword.replace(" ", "+")
+        val trimmed = keyword.trim()
+        if (trimmed.isEmpty()) {
+            // Blank query — clear results and don't hit the network.
+            isLoadingMutableLiveData.postValue(false)
+            fetchSearchResultMutableLiveData.postValue(emptyList())
+            return@launch
+        }
+        isLoadingMutableLiveData.postValue(true)
+        val searchKeyword = trimmed.replace(" ", "+")
         val searchResult = parseJsonSearchRepository.fetchSearchResult(searchKeyword)
         fetchSearchResultMutableLiveData.postValue(searchResult)
+        isLoadingMutableLiveData.postValue(false)
     }
 }
