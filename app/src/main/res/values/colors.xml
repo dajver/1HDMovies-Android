@@ -18,4 +18,6 @@
     <color name="ios_gray">#8E8E93</color>
     <!-- Search field fill (iOS gray-opacity-0.2 over black). -->
     <color name="search_bar_fill">#1C1C1E</color>
+    <!-- iOS system blue — "See All" links. -->
+    <color name="ios_blue">#0A84FF</color>
 </resources>

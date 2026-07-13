@@ -237,15 +237,18 @@
                     app:layoutManager=".ui.sections.dashboard.manager.TVLinearLayoutManager"
                     tools:listitem="@layout/item_dashboard" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:paddingStart="15dp"
-                    android:paddingEnd="15dp"
-                    android:text="@string/movies"
-                    android:textColor="@android:color/white"
-                    android:textSize="24sp" />
+                <LinearLayout
+                    style="@style/DashboardRowHeader">
+
+                    <TextView
+                        style="@style/DashboardRowTitle"
+                        android:text="@string/movies" />
+
+                    <TextView
+                        android:id="@+id/btnSeeAllMovies"
+                        style="@style/DashboardSeeAll" />
+
+                </LinearLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvMovies"
@@ -255,15 +258,18 @@
                     app:layoutManager=".ui.sections.dashboard.manager.TVLinearLayoutManager"
                     tools:listitem="@layout/item_dashboard" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:paddingStart="15dp"
-                    android:paddingEnd="15dp"
-                    android:text="@string/tv_shows"
-                    android:textColor="@android:color/white"
-                    android:textSize="24sp" />
+                <LinearLayout
+                    style="@style/DashboardRowHeader">
+
+                    <TextView
+                        style="@style/DashboardRowTitle"
+                        android:text="@string/tv_shows" />
+
+                    <TextView
+                        android:id="@+id/btnSeeAllTvShows"
+                        style="@style/DashboardSeeAll" />
+
+                </LinearLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvTvShows"
@@ -273,15 +279,18 @@
                     app:layoutManager=".ui.sections.dashboard.manager.TVLinearLayoutManager"
                     tools:listitem="@layout/item_dashboard" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:paddingStart="15dp"
-                    android:paddingEnd="15dp"
-                    android:text="@string/action"
-                    android:textColor="@android:color/white"
-                    android:textSize="24sp" />
+                <LinearLayout
+                    style="@style/DashboardRowHeader">
+
+                    <TextView
+                        style="@style/DashboardRowTitle"
+                        android:text="@string/action" />
+
+                    <TextView
+                        android:id="@+id/btnSeeAllAction"
+                        style="@style/DashboardSeeAll" />
+
+                </LinearLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvAction"
@@ -291,15 +300,18 @@
                     app:layoutManager=".ui.sections.dashboard.manager.TVLinearLayoutManager"
                     tools:listitem="@layout/item_dashboard" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:paddingStart="15dp"
-                    android:paddingEnd="15dp"
-                    android:text="@string/comedy"
-                    android:textColor="@android:color/white"
-                    android:textSize="24sp" />
+                <LinearLayout
+                    style="@style/DashboardRowHeader">
+
+                    <TextView
+                        style="@style/DashboardRowTitle"
+                        android:text="@string/comedy" />
+
+                    <TextView
+                        android:id="@+id/btnSeeAllComedy"
+                        style="@style/DashboardSeeAll" />
+
+                </LinearLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvComedy"
@@ -309,15 +321,18 @@
                     app:layoutManager=".ui.sections.dashboard.manager.TVLinearLayoutManager"
                     tools:listitem="@layout/item_dashboard" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:paddingStart="15dp"
-                    android:paddingEnd="15dp"
-                    android:text="@string/drama"
-                    android:textColor="@android:color/white"
-                    android:textSize="24sp" />
+                <LinearLayout
+                    style="@style/DashboardRowHeader">
+
+                    <TextView
+                        style="@style/DashboardRowTitle"
+                        android:text="@string/drama" />
+
+                    <TextView
+                        android:id="@+id/btnSeeAllDrama"
+                        style="@style/DashboardSeeAll" />
+
+                </LinearLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvDrama"
@@ -327,15 +342,18 @@
                     app:layoutManager=".ui.sections.dashboard.manager.TVLinearLayoutManager"
                     tools:listitem="@layout/item_dashboard" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:paddingStart="15dp"
-                    android:paddingEnd="15dp"
-                    android:text="@string/fantasy"
-                    android:textColor="@android:color/white"
-                    android:textSize="24sp" />
+                <LinearLayout
+                    style="@style/DashboardRowHeader">
+
+                    <TextView
+                        style="@style/DashboardRowTitle"
+                        android:text="@string/fantasy" />
+
+                    <TextView
+                        android:id="@+id/btnSeeAllFantasy"
+                        style="@style/DashboardSeeAll" />
+
+                </LinearLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvFantasy"
@@ -345,15 +363,18 @@
                     app:layoutManager=".ui.sections.dashboard.manager.TVLinearLayoutManager"
                     tools:listitem="@layout/item_dashboard" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:paddingStart="15dp"
-                    android:paddingEnd="15dp"
-                    android:text="@string/horror"
-                    android:textColor="@android:color/white"
-                    android:textSize="24sp" />
+                <LinearLayout
+                    style="@style/DashboardRowHeader">
+
+                    <TextView
+                        style="@style/DashboardRowTitle"
+                        android:text="@string/horror" />
+
+                    <TextView
+                        android:id="@+id/btnSeeAllHorror"
+                        style="@style/DashboardSeeAll" />
+
+                </LinearLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvHorror"
@@ -363,15 +384,18 @@
                     app:layoutManager=".ui.sections.dashboard.manager.TVLinearLayoutManager"
                     tools:listitem="@layout/item_dashboard" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:paddingStart="15dp"
-                    android:paddingEnd="15dp"
-                    android:text="@string/mystery"
-                    android:textColor="@android:color/white"
-                    android:textSize="24sp" />
+                <LinearLayout
+                    style="@style/DashboardRowHeader">
+
+                    <TextView
+                        style="@style/DashboardRowTitle"
+                        android:text="@string/mystery" />
+
+                    <TextView
+                        android:id="@+id/btnSeeAllMystery"
+                        style="@style/DashboardSeeAll" />
+
+                </LinearLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvMystery"
@@ -381,15 +405,18 @@
                     app:layoutManager=".ui.sections.dashboard.manager.TVLinearLayoutManager"
                     tools:listitem="@layout/item_dashboard" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:paddingStart="15dp"
-                    android:paddingEnd="15dp"
-                    android:text="@string/animation"
-                    android:textColor="@android:color/white"
-                    android:textSize="24sp" />
+                <LinearLayout
+                    style="@style/DashboardRowHeader">
+
+                    <TextView
+                        style="@style/DashboardRowTitle"
+                        android:text="@string/animation" />
+
+                    <TextView
+                        android:id="@+id/btnSeeAllAnimation"
+                        style="@style/DashboardSeeAll" />
+
+                </LinearLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvAnimation"
@@ -399,15 +426,18 @@
                     app:layoutManager=".ui.sections.dashboard.manager.TVLinearLayoutManager"
                     tools:listitem="@layout/item_dashboard" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:paddingStart="15dp"
-                    android:paddingEnd="15dp"
-                    android:text="@string/top_imdb"
-                    android:textColor="@android:color/white"
-                    android:textSize="24sp" />
+                <LinearLayout
+                    style="@style/DashboardRowHeader">
+
+                    <TextView
+                        style="@style/DashboardRowTitle"
+                        android:text="@string/top_imdb" />
+
+                    <TextView
+                        android:id="@+id/btnSeeAllTopImdb"
+                        style="@style/DashboardSeeAll" />
+
+                </LinearLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvTopIMDB"

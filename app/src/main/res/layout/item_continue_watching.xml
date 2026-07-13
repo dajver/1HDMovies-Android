@@ -1,62 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- iOS-style continue-watching card: rounded poster + centered play icon, title/subtitle below. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
+    android:layout_margin="5dp"
     android:orientation="vertical">
 
     <FrameLayout
-        android:layout_width="150dp"
-        android:layout_height="250dp"
-        android:layout_margin="5dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:background="@drawable/item_selected_background"
-        android:padding="5dp">
+        android:padding="3dp">
 
-        <ImageView
-            android:id="@+id/ivPoster"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scaleType="centerCrop"
-            android:src="@drawable/img_poster" />
+        <androidx.cardview.widget.CardView
+            android:layout_width="150dp"
+            android:layout_height="220dp"
+            app:cardBackgroundColor="@color/search_bar_fill"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="0dp">
 
-        <ImageView
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_gravity="center"
-            android:alpha="0.85"
-            android:src="@android:drawable/ic_media_play"
-            android:tint="@android:color/white" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:background="@color/transparent_background"
-            android:orientation="vertical"
-            android:padding="6dp">
-
-            <TextView
-                android:id="@+id/tvTitle"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:textColor="@android:color/white"
-                android:textSize="15sp"
-                tools:text="Show Title" />
+                android:layout_height="match_parent">
 
-            <TextView
-                android:id="@+id/tvSubtitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:textColor="@color/selected_background"
-                android:textSize="12sp"
-                tools:text="Next: 4 Episode Name" />
+                <ImageView
+                    android:id="@+id/ivPoster"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/img_poster" />
 
-        </LinearLayout>
+                <ImageView
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_gravity="center"
+                    android:alpha="0.9"
+                    android:contentDescription="@string/watch_now"
+                    android:src="@android:drawable/ic_media_play"
+                    android:tint="@android:color/white" />
+
+            </FrameLayout>
+
+        </androidx.cardview.widget.CardView>
 
     </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="6dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:gravity="start"
+            android:maxLines="1"
+            android:textColor="@android:color/white"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            tools:text="Show Title" />
+
+        <TextView
+            android:id="@+id/tvSubtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:gravity="start"
+            android:maxLines="1"
+            android:textColor="@color/ios_gray"
+            android:textSize="12sp"
+            tools:text="Next: 4 · Episode Name" />
+
+    </LinearLayout>
 
 </LinearLayout>

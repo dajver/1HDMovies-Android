@@ -137,7 +137,6 @@ class DashboardFragment: BaseFragment<FragmentDashboardBinding>(FragmentDashboar
         dashboardViewModel.fetchAnimationMovies()
         dashboardViewModel.fetchAnimationMoviesLiveData.observe(viewLifecycleOwner) {
             val animationMovies = it.toMutableList()
-            animationMovies.add(animationMovies.size, genreMoviesPlaceHolder(getString(R.string.animation), GenresEnum.ANIMATION))
             animationMoviesRecyclerAdapter.setMovies(animationMovies)
         }
 
@@ -161,63 +160,54 @@ class DashboardFragment: BaseFragment<FragmentDashboardBinding>(FragmentDashboar
         dashboardViewModel.fetchMovies()
         dashboardViewModel.fetchMoviesLiveData.observe(viewLifecycleOwner) {
             val moviesList = it.toMutableList()
-            moviesList.add(moviesList.size, allMoviesPlaceHolder())
             moviesRecyclerAdapter.setMovies(moviesList)
         }
 
         dashboardViewModel.fetchTvShows()
         dashboardViewModel.fetchTvShowsLiveData.observe(viewLifecycleOwner) {
             val tvShowsList = it.toMutableList()
-            tvShowsList.add(tvShowsList.size, allTvShowsPlaceHolder())
             tvShowsRecyclerAdapter.setMovies(tvShowsList)
         }
 
         dashboardViewModel.fetchActionMovies()
         dashboardViewModel.fetchActionMoviesLiveData.observe(viewLifecycleOwner) {
             val actionMovies = it.toMutableList()
-            actionMovies.add(actionMovies.size, genreMoviesPlaceHolder(getString(R.string.action), GenresEnum.ACTION))
             actionMoviesRecyclerAdapter.setMovies(actionMovies)
         }
 
         dashboardViewModel.fetchComedyMovies()
         dashboardViewModel.fetchComedyMoviesLiveData.observe(viewLifecycleOwner) {
             val comedyMovies = it.toMutableList()
-            comedyMovies.add(comedyMovies.size, genreMoviesPlaceHolder(getString(R.string.comedy), GenresEnum.COMEDY))
             comedyMoviesRecyclerAdapter.setMovies(comedyMovies)
         }
 
         dashboardViewModel.fetchDramaMovies()
         dashboardViewModel.fetchDramaMoviesLiveData.observe(viewLifecycleOwner) {
             val dramaMovies = it.toMutableList()
-            dramaMovies.add(dramaMovies.size, genreMoviesPlaceHolder(getString(R.string.drama), GenresEnum.DRAMA))
             dramaMoviesRecyclerAdapter.setMovies(dramaMovies)
         }
 
         dashboardViewModel.fetchFantasyMovies()
         dashboardViewModel.fetchFantasyMoviesLiveData.observe(viewLifecycleOwner) {
             val fantasyMovies = it.toMutableList()
-            fantasyMovies.add(fantasyMovies.size, genreMoviesPlaceHolder(getString(R.string.fantasy), GenresEnum.FANTASY))
             fantasyMoviesRecyclerAdapter.setMovies(fantasyMovies)
         }
 
         dashboardViewModel.fetchHorrorMovies()
         dashboardViewModel.fetchHorrorMoviesLiveData.observe(viewLifecycleOwner) {
             val horrorMovies = it.toMutableList()
-            horrorMovies.add(horrorMovies.size, genreMoviesPlaceHolder(getString(R.string.horror), GenresEnum.HORROR))
             horrorMoviesRecyclerAdapter.setMovies(horrorMovies)
         }
 
         dashboardViewModel.fetchMysteryMovies()
         dashboardViewModel.fetchMysteryMoviesLiveData.observe(viewLifecycleOwner) {
             val mysteryMovies = it.toMutableList()
-            mysteryMovies.add(mysteryMovies.size, genreMoviesPlaceHolder(getString(R.string.mystery), GenresEnum.MYSTERY))
             mysteryMoviesRecyclerAdapter.setMovies(mysteryMovies)
         }
 
         dashboardViewModel.fetchTopIMDBMovies()
         dashboardViewModel.fetchTopIMDBMoviesLiveData.observe(viewLifecycleOwner) {
             val topIMDBMovies = it.toMutableList()
-            topIMDBMovies.add(topIMDBMovies.size, genreMoviesPlaceHolder(getString(R.string.top_imdb), GenresEnum.TOP_IMDB))
             topImdbMoviesRecyclerAdapter.setMovies(topIMDBMovies)
         }
 
@@ -343,49 +333,16 @@ class DashboardFragment: BaseFragment<FragmentDashboardBinding>(FragmentDashboar
         binding.btnAccount.setOnClickListener {
             navigationRouter.navigateTo(Router.Account)
         }
-    }
 
-    private fun allMoviesPlaceHolder(): MoviesDataModel {
-        val quality = ""
-        val thumbnail = ""
-        val episodes = ""
-        return MoviesDataModel(
-            getString(R.string.all_movies),
-            thumbnail,
-            NONE_LINK_TO_DETAILS,
-            MovieType.MOVIE,
-            quality,
-            episodes
-        )
-    }
-
-    private fun allTvShowsPlaceHolder(): MoviesDataModel {
-        val quality = ""
-        val thumbnail = ""
-        val episodes = ""
-        return MoviesDataModel(
-            getString(R.string.all_tv_shows),
-            thumbnail,
-            NONE_LINK_TO_DETAILS,
-            MovieType.TV_SHOW,
-            quality,
-            episodes
-        )
-    }
-
-    private fun genreMoviesPlaceHolder(genreName: String, genre: GenresEnum): MoviesDataModel {
-        val quality = ""
-        val thumbnail = ""
-        val episodes = ""
-        return MoviesDataModel(
-            genreName,
-            thumbnail,
-            NONE_LINK_TO_DETAILS,
-            MovieType.MOVIE,
-            quality,
-            episodes
-        ).apply {
-            this.genre = genre
-        }
+        binding.btnSeeAllMovies.setOnClickListener { navigationRouter.navigateTo(Router.AllMovies) }
+        binding.btnSeeAllTvShows.setOnClickListener { navigationRouter.navigateTo(Router.AllTvShows) }
+        binding.btnSeeAllAction.setOnClickListener { navigationRouter.navigateTo(Router.MovieByGenre(GenresEnum.ACTION)) }
+        binding.btnSeeAllComedy.setOnClickListener { navigationRouter.navigateTo(Router.MovieByGenre(GenresEnum.COMEDY)) }
+        binding.btnSeeAllDrama.setOnClickListener { navigationRouter.navigateTo(Router.MovieByGenre(GenresEnum.DRAMA)) }
+        binding.btnSeeAllFantasy.setOnClickListener { navigationRouter.navigateTo(Router.MovieByGenre(GenresEnum.FANTASY)) }
+        binding.btnSeeAllHorror.setOnClickListener { navigationRouter.navigateTo(Router.MovieByGenre(GenresEnum.HORROR)) }
+        binding.btnSeeAllMystery.setOnClickListener { navigationRouter.navigateTo(Router.MovieByGenre(GenresEnum.MYSTERY)) }
+        binding.btnSeeAllAnimation.setOnClickListener { navigationRouter.navigateTo(Router.MovieByGenre(GenresEnum.ANIMATION)) }
+        binding.btnSeeAllTopImdb.setOnClickListener { navigationRouter.navigateTo(Router.MovieByGenre(GenresEnum.TOP_IMDB)) }
     }
 }
