@@ -32,8 +32,24 @@ class WatchMovieFragment: BaseFragment<FragmentWatchMovieBinding>(FragmentWatchM
     private val playerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val data = result.data
+            val newServerIndex = data?.getIntExtra(VideoPlayerActivity.RESULT_SERVER_INDEX, -1) ?: -1
             val newIndex = data?.getIntExtra(VideoPlayerActivity.RESULT_EPISODE_INDEX, -1) ?: -1
-            if (newIndex >= 0 && newIndex != currentEpisodeIndex) {
+            if (newServerIndex >= 0) {
+                // Switch server — re-detect the stream, then the player relaunches automatically.
+                val servers = viewModel.servers
+                if (newServerIndex in servers.indices) {
+                    val server = servers[newServerIndex]
+                    if (server != viewModel.selectedServer) {
+                        binding.pbLoadingSources.isVisible = true
+                        binding.webView.resetState()
+                        viewModel.selectServer(server)
+                    } else {
+                        loadCurrentEpisode()
+                    }
+                } else {
+                    navigationRouter.navigateBack()
+                }
+            } else if (newIndex >= 0 && newIndex != currentEpisodeIndex) {
                 // Load next/prev episode
                 val eps = episodes ?: return@registerForActivityResult
                 if (newIndex in eps.indices) {

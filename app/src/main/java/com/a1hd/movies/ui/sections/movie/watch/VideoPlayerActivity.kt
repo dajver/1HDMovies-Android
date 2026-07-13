@@ -319,7 +319,10 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVid
             if (which != currentServerIndex) {
                 currentServerIndex = which
                 btnServer?.text = names[which]
-                // Restart with the new server - go back to WatchMovieFragment to re-detect stream
+                // Return to WatchMovieFragment so it re-detects the stream for the chosen server.
+                val resultIntent = Intent()
+                resultIntent.putExtra(RESULT_SERVER_INDEX, which)
+                setResult(RESULT_OK, resultIntent)
                 finish()
             }
         }
@@ -563,6 +566,7 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVid
     companion object {
 
         const val RESULT_EPISODE_INDEX = "RESULT_EPISODE_INDEX"
+        const val RESULT_SERVER_INDEX = "RESULT_SERVER_INDEX"
 
         private const val PROGRESS_SAVE_INTERVAL_MS = 10_000L
         private const val WATCHED_THRESHOLD_MS = 300_000L // 5 minutes
