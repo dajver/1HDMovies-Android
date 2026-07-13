@@ -150,7 +150,6 @@ class WatchMovieFragment: BaseFragment<FragmentWatchMovieBinding>(FragmentWatchM
         }
 
         viewModel.embedUrlLiveData.observe(viewLifecycleOwner) { result ->
-            binding.pbLoadingSources.isVisible = false
             binding.webView.loadUrl(result.url ?: movieUrl!!)
         }
 

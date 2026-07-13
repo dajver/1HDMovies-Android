@@ -18,6 +18,7 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import androidx.core.view.isVisible
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
@@ -50,10 +51,10 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import javax.inject.Inject
 
-private const val MIN_BUFFER_DURATION = 2000
-private const val MAX_BUFFER_DURATION = 5000
-private const val MIN_PLAYBACK_START_BUFFER = 1500
-private const val MIN_PLAYBACK_RESUME_BUFFER = 2000
+private const val MIN_BUFFER_DURATION = 15000
+private const val MAX_BUFFER_DURATION = 50000
+private const val MIN_PLAYBACK_START_BUFFER = 2500
+private const val MIN_PLAYBACK_RESUME_BUFFER = 5000
 
 @UnstableApi
 @AndroidEntryPoint
@@ -418,7 +419,10 @@ class VideoPlayerActivity : BaseActivity<ActivityVideoPlayerBinding>(ActivityVid
 
     private fun initializePlayer() {
         val loadControl: LoadControl = DefaultLoadControl.Builder()
-            .setAllocator(DefaultAllocator(true, 16))
+            // 64KB segments (ExoPlayer default). The previous value of 16 bytes forced tens of
+            // thousands of tiny allocations to hold the buffer, thrashing GC and eventually
+            // exhausting memory during long playback.
+            .setAllocator(DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE))
             .setBufferDurationsMs(MIN_BUFFER_DURATION, MAX_BUFFER_DURATION, MIN_PLAYBACK_START_BUFFER, MIN_PLAYBACK_RESUME_BUFFER)
             .setTargetBufferBytes(-1)
             .setPrioritizeTimeOverSizeThresholds(true).build()
