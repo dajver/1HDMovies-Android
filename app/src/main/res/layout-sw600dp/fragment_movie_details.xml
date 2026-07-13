@@ -348,11 +348,12 @@
 
                         <Button
                             android:id="@+id/btnWatchMovie"
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
                             android:background="@drawable/button_watch_now"
                             android:focusable="true"
+                            android:paddingStart="32dp"
+                            android:paddingEnd="32dp"
                             android:paddingTop="14dp"
                             android:paddingBottom="14dp"
                             android:text="@string/watch_now"
@@ -363,12 +364,13 @@
 
                         <Button
                             android:id="@+id/btnTrailer"
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
                             android:layout_marginStart="10dp"
                             android:background="@drawable/button_trailer"
                             android:focusable="true"
+                            android:paddingStart="32dp"
+                            android:paddingEnd="32dp"
                             android:paddingTop="14dp"
                             android:paddingBottom="14dp"
                             android:text="@string/trailer"
