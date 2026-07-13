@@ -22,8 +22,23 @@ class FilterBarView(context: Context, attrs: AttributeSet? = null) : FrameLayout
         private set
     var onFiltersChanged: (() -> Unit)? = null
 
-    private val activeTint = ColorStateList.valueOf(Color.parseColor("#CCE53935"))
-    private val inactiveTint = ColorStateList.valueOf(Color.parseColor("#44FFFFFF"))
+    private val focusedState = intArrayOf(android.R.attr.state_focused)
+    private val defaultState = intArrayOf()
+
+    // Focus-aware tints: a focused chip fills solid red so D-pad selection is clearly visible.
+    private val activeTint = ColorStateList(
+        arrayOf(focusedState, defaultState),
+        intArrayOf(Color.parseColor("#FF3B30"), Color.parseColor("#CCE53935"))
+    )
+    private val inactiveTint = ColorStateList(
+        arrayOf(focusedState, defaultState),
+        intArrayOf(Color.parseColor("#FF3B30"), Color.parseColor("#44FFFFFF"))
+    )
+    private val activeTextColor = ColorStateList.valueOf(Color.WHITE)
+    private val inactiveTextColor = ColorStateList(
+        arrayOf(focusedState, defaultState),
+        intArrayOf(Color.WHITE, Color.parseColor("#AAAAAA"))
+    )
 
     init {
         binding = ViewFilterBarBinding.inflate(LayoutInflater.from(context), this, true)
@@ -118,11 +133,11 @@ class FilterBarView(context: Context, attrs: AttributeSet? = null) : FrameLayout
         if (value.isNotEmpty()) {
             button.text = value
             button.backgroundTintList = activeTint
-            button.setTextColor(Color.WHITE)
+            button.setTextColor(activeTextColor)
         } else {
             button.text = label
             button.backgroundTintList = inactiveTint
-            button.setTextColor(Color.parseColor("#AAAAAA"))
+            button.setTextColor(inactiveTextColor)
         }
     }
 }

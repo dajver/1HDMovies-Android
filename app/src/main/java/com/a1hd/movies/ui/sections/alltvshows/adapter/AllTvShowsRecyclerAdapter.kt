@@ -15,9 +15,26 @@ class AllTvShowsRecyclerAdapter @Inject constructor() : RecyclerView.Adapter<Rec
     var onTvShowsClickListener: (MoviesDataModel) -> Unit = { }
 
     fun setTvSHows(groups: MutableList<MoviesDataModel>) {
-        this.tvSHowsList.clear()
-        this.tvSHowsList.addAll(groups)
-        notifyDataSetChanged()
+        // The ViewModel posts the full accumulated list. When it's a pure append (pagination),
+        // insert only the new tail so existing rows — and the current D-pad focus — stay put.
+        val oldSize = tvSHowsList.size
+        if (isAppendOf(groups, oldSize)) {
+            val inserted = groups.size - oldSize
+            tvSHowsList.addAll(groups.subList(oldSize, groups.size))
+            notifyItemRangeInserted(oldSize, inserted)
+        } else {
+            tvSHowsList.clear()
+            tvSHowsList.addAll(groups)
+            notifyDataSetChanged()
+        }
+    }
+
+    private fun isAppendOf(groups: List<MoviesDataModel>, oldSize: Int): Boolean {
+        if (oldSize == 0 || groups.size <= oldSize) return false
+        for (i in 0 until oldSize) {
+            if (tvSHowsList[i].link != groups[i].link) return false
+        }
+        return true
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {

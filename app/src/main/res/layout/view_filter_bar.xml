@@ -55,7 +55,8 @@
             android:id="@+id/btnReset"
             android:layout_width="36dp"
             android:layout_height="36dp"
-            android:background="@android:color/transparent"
+            android:background="@drawable/icon_button_background"
+            android:focusable="true"
             android:src="@android:drawable/ic_menu_close_clear_cancel"
             android:contentDescription="@string/reset"
             android:visibility="gone" />

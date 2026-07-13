@@ -11,12 +11,14 @@
     <FrameLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/item_selected_background"
+        android:duplicateParentState="true"
         android:padding="3dp">
 
         <androidx.cardview.widget.CardView
             android:layout_width="150dp"
             android:layout_height="220dp"
+            android:duplicateParentState="true"
+            android:foreground="@drawable/card_focus_border"
             app:cardBackgroundColor="@color/search_bar_fill"
             app:cardCornerRadius="8dp"
             app:cardElevation="0dp">

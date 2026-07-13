@@ -16,8 +16,26 @@ class MovieGenresRecyclerAdapter @Inject constructor(): RecyclerView.Adapter<Rec
     var onMovieGenreClickListener: (MoviesDataModel) -> Unit = { }
 
     fun setMovies(groups: MutableList<MoviesDataModel>) {
-        this.moviesGenreList.addAll(groups)
-        notifyDataSetChanged()
+        // The ViewModel posts the full accumulated (deduped) list each page. On a pure append
+        // (pagination), insert only the new tail so existing rows — and the current D-pad focus — stay put.
+        val oldSize = moviesGenreList.size
+        if (isAppendOf(groups, oldSize)) {
+            val inserted = groups.size - oldSize
+            moviesGenreList.addAll(groups.subList(oldSize, groups.size))
+            notifyItemRangeInserted(oldSize, inserted)
+        } else {
+            moviesGenreList.clear()
+            moviesGenreList.addAll(groups)
+            notifyDataSetChanged()
+        }
+    }
+
+    private fun isAppendOf(groups: List<MoviesDataModel>, oldSize: Int): Boolean {
+        if (oldSize == 0 || groups.size <= oldSize) return false
+        for (i in 0 until oldSize) {
+            if (moviesGenreList[i].link != groups[i].link) return false
+        }
+        return true
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
